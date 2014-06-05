@@ -1,0 +1,17 @@
+*.o
+*.d
+*.crf
+*.bak
+*.Bak
+*.BAK
+dbg
+dbg/
+*.b
+*.B
+*.lst
+*.hex
+*.axf
+*.htm
+*.lnp
+*.map
+*.dep

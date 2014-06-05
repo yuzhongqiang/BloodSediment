@@ -4,18 +4,31 @@
 Target (Target 1), 0x0004 // Tools: 'ARM-ADS'
 
 Group (Source Group 1)
+Group (USER)
+Group (HARDWARE)
 
 File 1,2,<.\STM32F10x.s><STM32F10x.s>
+File 2,1,<.\main.c><main.c>
+File 3,1,<.\HARDWARE\delay.c><delay.c>
+File 3,1,<.\HARDWARE\key.c><key.c>
+File 3,1,<.\HARDWARE\led.c><led.c>
+File 3,1,<.\HARDWARE\sys.c><sys.c>
+File 3,1,<.\HARDWARE\usart.c><usart.c>
+File 3,1,<.\HARDWARE\comm.c><comm.c>
+File 3,1,<.\HARDWARE\lcd.c><lcd.c>
+File 3,1,<.\HARDWARE\printer.c><printer.c>
+File 3,1,<.\HARDWARE\reader.c><reader.c>
+File 3,1,<.\HARDWARE\sensor.c><sensor.c>
 
 
 Options 1,0,0  // Target 'Target 1'
- Device (STM32F101RC)
+ Device (STM32F103RC)
  Vendor (STMicroelectronics)
- Cpu (IRAM(0x20000000-0x20007FFF) IROM(0x8000000-0x803FFFF) CLOCK(8000000) CPUTYPE("Cortex-M3"))
+ Cpu (IRAM(0x20000000-0x2000BFFF) IROM(0x8000000-0x803FFFF) CLOCK(8000000) CPUTYPE("Cortex-M3"))
  FlashUt ()
  StupF ("STARTUP\ST\STM32F10x.s" ("STM32 Startup Code"))
  FlashDR (UL2CM3(-O14 -S0 -C0 -N00("ARM Cortex-M3") -D00(1BA00477) -L00(4) -FO7 -FD20000000 -FC800 -FN1 -FF0STM32F10x_512 -FS08000000 -FL040000))
- DevID (4244)
+ DevID (4230)
  Rgf (stm32f10x_lib.h)
  Mem ()
  C ()
@@ -37,7 +50,7 @@ Options 1,0,0  // Target 'Target 1'
  OutName (bloodsediment)
  GenApp=1
  GenLib=0
- GenHex=0
+ GenHex=1
  Debug=1
  Browse=1
  LstDir (.\)
@@ -55,18 +68,18 @@ Options 1,0,0  // Target 'Target 1'
  ADSFLGA { 243,31,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }
  ACPUTYP ("Cortex-M3")
  RVDEV ()
- ADSTFLGA { 0,12,0,2,99,0,64,66,0,0,0,0,0,0,0,0,0,0,0,0 }
+ ADSTFLGA { 0,12,0,2,99,0,0,66,0,0,0,0,0,0,0,0,0,0,0,0 }
  OCMADSOCM { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }
- OCMADSIRAM { 0,0,0,0,32,0,128,0,0 }
+ OCMADSIRAM { 0,0,0,0,32,0,192,0,0 }
  OCMADSIROM { 1,0,0,0,8,0,0,4,0 }
  OCMADSXRAM { 0,0,0,0,0,0,0,0,0 }
- OCR_RVCT { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,8,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,32,0,128,0,0,0,0,0,0,0,0,0,0,0 }
+ OCR_RVCT { 1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,8,0,0,4,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,32,0,192,0,0,0,0,0,0,0,0,0,0,0 }
  RV_STAVEC ()
  ADSCCFLG { 5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }
  ADSCMISC ()
  ADSCDEFN ()
  ADSCUDEF ()
- ADSCINCD ()
+ ADSCINCD (.\HARDWARE)
  ADSASFLG { 1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }
  ADSAMISC ()
  ADSADEFN ()
@@ -90,11 +103,11 @@ Options 1,0,0  // Target 'Target 1'
  ADSLDMC ()
  ADSLDIF ()
  ADSLDDW ()
-  OPTDL (SARMCM3.DLL)()(DARMSTM.DLL)(-pSTM32F101RC)(SARMCM3.DLL)()(TARMSTM.DLL)(-pSTM32F101RC)
-  OPTDBG 48125,1,()()()()()()()()()() ()()()()
- FLASH1 { 9,0,0,0,0,0,0,0,255,255,255,255,0,0,0,0,0,0,0,0 }
+  OPTDL (SARMCM3.DLL)()(DARMSTM.DLL)(-pSTM32F103RC)(SARMCM3.DLL)()(TARMSTM.DLL)(-pSTM32F103RC)
+  OPTDBG 48125,1,()()()()()()()()()() (BIN\UL2CM3.DLL)()()()
+ FLASH1 { 9,0,0,0,1,0,0,0,1,16,0,0,0,0,0,0,0,0,0,0 }
  FLASH2 (BIN\UL2CM3.DLL)
- FLASH3 ()
+ FLASH3 ("" ())
  FLASH4 ()
 EndOpt
 
