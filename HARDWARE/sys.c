@@ -20,6 +20,7 @@ void MY_NVIC_SetVectorTable(u32 NVIC_VectTab, u32 Offset)
 	SCB->VTOR = NVIC_VectTab|(Offset & (u32)0x1FFFFF80);//设置NVIC的向量表偏移寄存器
 	//用于标识向量表是在CODE区还是在RAM区
 }
+
 //设置NVIC分组
 //NVIC_Group:NVIC分组 0~4 总共5组 
 //CHECK OK
@@ -35,6 +36,7 @@ void MY_NVIC_PriorityGroupConfig(u8 NVIC_Group)
 	temp|=temp1;	   
 	SCB->AIRCR=temp;  //设置分组	    	  				   
 }
+
 //设置NVIC 
 //NVIC_PreemptionPriority:抢占优先级
 //NVIC_SubPriority       :响应优先级
@@ -117,6 +119,7 @@ void MYRCC_DeInit(void)
 	MY_NVIC_SetVectorTable(NVIC_VectTab_FLASH, 0x0);
 #endif
 }
+
 //THUMB指令不支持汇编内联
 //采用如下方法实现执行汇编指令WFI
 //CHECK OK
@@ -125,6 +128,7 @@ __asm void WFI_SET(void)
 {
 	WFI;    
 }
+
 //进入待机模式	 
 //check ok 
 //091202
@@ -137,6 +141,7 @@ void Sys_Standby(void)
 	PWR->CR|=1<<1;           //PDDS置位		  
 	WFI_SET();				 //执行WFI指令		 
 }	  
+
 //后备寄存器写入操作
 //reg:寄存器编号
 //reg:要写入的数值 
@@ -201,7 +206,8 @@ void JTAG_Set(u8 mode)
 	RCC->APB2ENR|=1<<0;     //开启辅助时钟	   
 	AFIO->MAPR&=0XF8FFFFFF; //清除MAPR的[26:24]
 	AFIO->MAPR|=temp;       //设置jtag模式
-} 
+}
+ 
 //系统时钟初始化函数
 //pll:选择的倍频数，从2开始，最大值为16	
 //CHECK OK
@@ -211,9 +217,11 @@ void stm32_clock_init(u8 PLL)
 	unsigned char temp=0;   
 	MYRCC_DeInit();		  //复位并配置向量表
 	RCC->CR|=0x00010000;  //外部高速时钟使能HSEON
-	while(!(RCC->CR>>17));//等待外部时钟就绪
+	while(!(RCC->CR>>17))
+		;				  //等待外部时钟就绪
+
 	RCC->CFGR=0X00000400; //APB1=DIV2;APB2=DIV1;AHB=DIV1;
-	PLL-=2;//抵消2个单位
+	PLL-=2;				  //抵消2个单位
 	RCC->CFGR|=PLL<<18;   //设置PLL值 2~16
 	RCC->CFGR|=1<<16;	  //PLLSRC ON 
 	FLASH->ACR|=0x32;	  //FLASH 2个延时周期
