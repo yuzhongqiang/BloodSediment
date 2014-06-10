@@ -12,8 +12,11 @@
 
 int main(void)
 {			
+	/* Set vector table */
+
+
 	/* System clock initiliaing */
-	stm32_clock_init(9); //系统时钟设置
+	sys_init();
 	delay_init(72);	     //延时初始化 
 
 	/* keys initializing */
