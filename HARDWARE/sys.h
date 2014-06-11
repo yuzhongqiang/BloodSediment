@@ -84,6 +84,8 @@
 //时钟定义
 #define OSC_FREQ 80000000     //HSE晶振频率
 #define PLL_FREQ 720000000    //PLL频率：72MHz
+#define PCLK1_FREQ 360000000  //PCLK1, APB1外设时钟频率
+#define PCLK2_FREQ 720000000  //PCLK2, APB2外设时钟频率
 
 /////////////////////////////////////////////////////////////////
 //                         导出的函数                          //
