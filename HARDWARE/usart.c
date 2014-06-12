@@ -100,21 +100,23 @@ void uart1_init(u32 baud)
 	u16 mantissa;
 	u16 fraction;
 		   
-	temp = (float)(PCLK2_FREQ/(baud*16));//得到USARTDIV
-	mantissa=temp;				 		//得到整数部分
-	fraction=(temp-mantissa)*16; 		//得到小数部分	 
-    mantissa<<=4;
-	mantissa+=fraction; 
-	RCC->APB2ENR|=1<<2;   //使能PORTA口时钟  
-	RCC->APB2ENR|=1<<14;  //使能串口时钟 
+	RCC->APB2ENR|=1<<2;   //使能PORTA口时钟   OK
+	RCC->APB2ENR|=1<<14;  //使能串口时钟 	  OK
 	GPIOA->CRH&=0XFFFFF00F; 
 	GPIOA->CRH|=0X000008B0;//IO状态设置
 		  
 	RCC->APB2RSTR|=1<<14;   //复位串口1
 	RCC->APB2RSTR&=~(1<<14);//停止复位	   	   
+
 	//波特率设置
+	temp = (float)(PCLK2_FREQ/(baud*16));//得到USARTDIV
+	mantissa=temp;				 		//得到整数部分
+	fraction=(temp-mantissa)*16; 		//得到小数部分	 
+    mantissa<<=4;
+	mantissa+=fraction; 
  	USART1->BRR=mantissa; // 波特率设置	 
 	USART1->CR1|=0X200C;  //1位停止,无校验位.
+
 #ifdef EN_USART1_RX		  //如果使能了接收
 	//使能接收中断
 	USART1->CR1|=1<<8;    //PE中断使能
@@ -128,7 +130,7 @@ void uart2_init(u32 baud)
 	float temp;
 	u16 mantissa, fraction;
 		   
-	//RCC->APB2ENR |= 1 << 2;   //使能PORTA口时钟  ???
+	RCC->APB2ENR |= 1 << 2;   //使能PORTA口时钟  OK
 	RCC->APB1ENR |= 1 << 17;  	//使能串口2时钟 
 	GPIOA->CRL &= 0XFFFF00FF; 
 	GPIOA->CRL |= 0X00008B00;	//IO状态设置	OK
@@ -145,7 +147,7 @@ void uart2_init(u32 baud)
  	USART2->BRR = mantissa; // 波特率设置	 
 	USART2->CR1 |= 0X200C;  //1位停止,无校验位.
 
-#ifdef EN_USART1_RX		  //如果使能了接收
+#ifdef EN_USART2_RX		  //如果使能了接收
 	//使能接收中断
 	USART2->CR1 |= (1 << 8);    //PE中断使能
 	USART2->CR1 |= (1 << 5);    //接收缓冲区非空中断使能	    	
@@ -158,13 +160,13 @@ void uart3_init(u32 baud)
 	float temp;
 	u16 mantissa, fraction;
 		   
-	//RCC->APB2ENR |= 1 << 3;   //使能PORTB口时钟  ???
+	RCC->APB2ENR |= 1 << 3;   //使能PORTB口时钟  OK
 	RCC->APB1ENR |= 1 << 18;  	//使能串口时钟  OK
-	//GPIOA->CRH &= 0XFFFFF00F; 
-	GPIOA->CRH |= 0X000008B0;//IO状态设置
+	GPIOB->CRH &= 0XFFFF00FF; 
+	GPIOB->CRH |= 0X00008B00;	//IO状态设置  OK
 		  
-	RCC->APB2RSTR |= (1 << 14);   //复位串口1
-	RCC->APB2RSTR &= ~(1 << 14);//停止复位	   	   
+	RCC->APB1RSTR |= (1 << 18);   //复位串口3	 OK
+	RCC->APB1RSTR &= ~(1 << 18);//停止复位	   	  OK
 
 	//波特率设置
 	temp = (float)(PCLK1_FREQ / (baud * 16));	//得到USARTDIV
@@ -175,10 +177,10 @@ void uart3_init(u32 baud)
  	USART3->BRR = mantissa; // 波特率设置	 
 	USART3->CR1 |= 0X200C;  //1位停止,无校验位.
 
-#ifdef EN_USART1_RX		  //如果使能了接收
+#ifdef EN_USART3_RX		  //如果使能了接收
 	//使能接收中断
-	USART2->CR1 |= (1 << 8);    //PE中断使能
-	USART2->CR1 |= (1 << 5);    //接收缓冲区非空中断使能	    	
+	USART3->CR1 |= (1 << 8);    //PE中断使能
+	USART3->CR1 |= (1 << 5);    //接收缓冲区非空中断使能	    	
 	nvic_init(3, 3, USART3_IRQChannel, 2);//组2，最低优先级 
 #endif
 }
@@ -189,13 +191,13 @@ void uart4_init(u32 baud)
 	float temp;
 	u16 mantissa, fraction;
 		   
-	//RCC->APB2ENR |= 1 << 2;   //使能PORTA口时钟  ???
-	RCC->APB1ENR |= 1 << 19;  //使能串口时钟 
-	GPIOA->CRH &= 0XFFFFF00F; 
-	GPIOA->CRH |= 0X000008B0;//IO状态设置
+	RCC->APB2ENR |= 1 << 4;   //使能PORTC口时钟  OK
+	RCC->APB1ENR |= 1 << 19;  	//使能串口时钟 		OK
+	GPIOC->CRH &= 0XFFFF00FF; 
+	GPIOC->CRH |= 0X00008B00;	//IO状态设置	 OK
 		  
-	RCC->APB2RSTR |= (1 << 14);   //复位串口1
-	RCC->APB2RSTR &= ~(1 << 14);//停止复位	   	   
+	RCC->APB1RSTR |= (1 << 19);   	//复位串口4		OK
+	RCC->APB1RSTR &= ~(1 << 19);	//停止复位	   	OK 
 
 	//波特率设置
 	temp = (float)(PCLK1_FREQ / (baud * 16));	//得到USARTDIV
@@ -206,7 +208,7 @@ void uart4_init(u32 baud)
  	USART4->BRR = mantissa; // 波特率设置	 
 	USART4->CR1 |= 0X200C;  //1位停止,无校验位.
 
-#ifdef EN_USART1_RX		  //如果使能了接收
+#ifdef EN_USART4_RX		  //如果使能了接收
 	//使能接收中断
 	USART4->CR1 |= (1 << 8);    //PE中断使能
 	USART4->CR1 |= (1 << 5);    //接收缓冲区非空中断使能	    	
@@ -220,13 +222,16 @@ void uart5_init(u32 baud)
 	float temp;
 	u16 mantissa, fraction;
 		   
-	//RCC->APB2ENR |= 1 << 2;   //使能PORTA口时钟  ???
-	RCC->APB1ENR |= 1 << 20;  //使能串口时钟 
-	GPIOA->CRH &= 0XFFFFF00F; 
-	GPIOA->CRH |= 0X000008B0;//IO状态设置
+	RCC->APB2ENR |= 1 << 4;   //使能PORTC口时钟    OK
+	RCC->APB2ENR |= 1 << 5;   //使能PORTD口时钟    OK
+	RCC->APB1ENR |= 1 << 20;  	//使能串口时钟 	   OK
+	GPIOC->CRH &= 0XFFF0FFFF; 
+	GPIOC->CRH |= 0X000B0000;	//IO状态设置	OK
+	GPIOD->CRL &= 0XFFFFF0FF; 
+	GPIOD->CRL |= 0X00000800;	//IO状态设置	OK	 
 		  
-	RCC->APB2RSTR |= (1 << 14);   //复位串口1
-	RCC->APB2RSTR &= ~(1 << 14);//停止复位	   	   
+	RCC->APB1RSTR |= (1 << 20);   	//复位串口5	   OK
+	RCC->APB1RSTR &= ~(1 << 20);	//停止复位	   OK  
 
 	//波特率设置
 	temp = (float)(PCLK1_FREQ / (baud * 16));	//得到USARTDIV
@@ -237,10 +242,10 @@ void uart5_init(u32 baud)
  	USART5->BRR = mantissa; // 波特率设置	 
 	USART5->CR1 |= 0X200C;  //1位停止,无校验位.
 
-#ifdef EN_USART1_RX		  //如果使能了接收
+#ifdef EN_USART5_RX		  //如果使能了接收
 	//使能接收中断
-	USART2->CR1 |= (1 << 8);    //PE中断使能
-	USART2->CR1 |= (1 << 5);    //接收缓冲区非空中断使能	    	
+	USART5->CR1 |= (1 << 8);    //PE中断使能
+	USART5->CR1 |= (1 << 5);    //接收缓冲区非空中断使能	    	
 	nvic_init(3, 3, USART5_IRQChannel, 2);//组2，最低优先级 
 #endif
 }
