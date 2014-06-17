@@ -111,10 +111,23 @@ void nvic_init(u8 NVIC_PreemptionPriority,u8 NVIC_SubPriority,u8 NVIC_Channel,u8
 	NVIC->IPR[IPRADDR] |= (temp << IPROFFSET);	//设置响应优先级和抢断优先级   	    	  				   
 }
 
+void gpios_init(void)
+{
+	RCC->APB2ENR |= (1 << 2);   //使能PORTA口时钟
+	RCC->APB2ENR |= (1 << 3);   //使能PORTB口时钟
+	RCC->APB2ENR |= (1 << 4);	//使能PORTC口时钟
+}
+
 void sys_init(void)
-{										  					   
+{						
+	 /* 中断控制器初始化 */				  					   
 	 MYRCC_DeInit();
+
+	 /* PLL时钟初始化 */
 	 pll_clock_init(PLL_FREQ);
+
+	 /* 初始化GPIOA, GPIOB, GPIOC模块 */
+	 gpios_init();
 }
 
 //JTAG模式设置,用于设置JTAG的模式
@@ -130,3 +143,4 @@ void jtag_set(u8 mode)
 	AFIO->MAPR&=0XF8FFFFFF; //清除MAPR的[26:24]
 	AFIO->MAPR|=temp;       //设置jtag模式
 }
+

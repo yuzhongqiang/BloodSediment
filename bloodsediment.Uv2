@@ -19,6 +19,8 @@ File 3,1,<.\HARDWARE\lcd.c><lcd.c>
 File 3,1,<.\HARDWARE\printer.c><printer.c>
 File 3,1,<.\HARDWARE\reader.c><reader.c>
 File 3,1,<.\HARDWARE\sensor.c><sensor.c>
+File 3,1,<.\HARDWARE\motor.c><motor.c>
+File 3,1,<.\HARDWARE\storage.c><storage.c>
 
 
 Options 1,0,0  // Target 'Target 1'
