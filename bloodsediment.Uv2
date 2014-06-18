@@ -109,7 +109,7 @@ Options 1,0,0  // Target 'Target 1'
   OPTDBG 48125,1,()()()()()()()()()() (BIN\UL2CM3.DLL)()()()
  FLASH1 { 9,0,0,0,1,0,0,0,1,16,0,0,0,0,0,0,0,0,0,0 }
  FLASH2 (BIN\UL2CM3.DLL)
- FLASH3 ("" ())
+ FLASH3 ()
  FLASH4 ()
 EndOpt
 

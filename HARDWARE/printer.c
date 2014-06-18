@@ -30,13 +30,13 @@ void printer_init(void)
     mantissa <<= 4;
 	mantissa += fraction; 
  	USART3->BRR = mantissa; // 波特率设置	 
-	USART3->CR1 |= 0X200C;  //1位停止,无校验位.
+	USART3->CR1 |= 0X200C;  // 1位停止,无校验位.
 
-#ifdef EN_USART3_RX		  //如果使能了接收
+#ifdef EN_USART3_RX		  	//如果使能了接收
 	//使能接收中断
 	USART3->CR1 |= (1 << 8);    //PE中断使能
 	USART3->CR1 |= (1 << 5);    //接收缓冲区非空中断使能	    	
-	nvic_init(3, 3, USART3_IRQChannel, 2);//组2，最低优先级 
+	nvic_init(3, 3, USART3_IRQChannel, 2);	//组2，最低优先级 
 #endif
 }
 
