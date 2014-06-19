@@ -5,7 +5,7 @@
 #ifndef __PRINTER_H
 #define __PRINTER_H
 
-void printer_init(void);
+void printer_init(u32);
 
 
 

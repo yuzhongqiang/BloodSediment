@@ -5,7 +5,7 @@
 #ifndef __READER_H
 #define __READER_H
 
-void reader_init(void);
+void reader_init(u32);
 
 
 

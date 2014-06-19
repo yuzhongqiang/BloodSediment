@@ -6,11 +6,13 @@
 */
 
 #include <stm32f10x_lib.h>	
+#include "sys.h"
 #include "comm.h"	 
 
 /* PC communication uses USART4 */
-void comm_init(void)
+void comm_init(u32 baud)
 {  	 
+#if 0
 	float temp;
 	u16 mantissa, fraction;
 		   
@@ -37,4 +39,6 @@ void comm_init(void)
 	USART4->CR1 |= (1 << 5);    //接收缓冲区非空中断使能	    	
 	nvic_init(3, 3, USART4_IRQChannel, 2);//组2，最低优先级 
 #endif
+#endif
 }
+

@@ -6,13 +6,15 @@
 */
 
 #include <stm32f10x_lib.h>
+#include "sys.h"
+#include "lcd.h"
 
 
 /*
   LCD uses USART1
   Baudrate = fck/(16*USARTDIV)	; Baudrate is of float type
 */
-void lcd_init(void)
+void lcd_init(u32 baud)
 {
 	float temp;
 	u16 mantissa;

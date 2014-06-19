@@ -71,7 +71,7 @@ void timer_init(u16 freq_div, u16 arr)
 
 	TIM3->DIER |= (1 << 0);   	//允许更新中断				
 	TIM3->CR1 |= 0x01;      	//使能定时器3
-  	MY_NVIC_Init(1,3,TIM3_IRQChannel,2);//抢占1，子优先级3，组2
+  	nvic_init(1,3,TIM3_IRQChannel,2);//抢占1，子优先级3，组2
 }
 
 /*
@@ -84,7 +84,7 @@ void motor_init(void)
 	GPIOA->CRL &= 0xF000FFFF;
 	GPIOA->CRL |= 0xF333FFFF;
 
-	/* 初始时输出高电平(???) */
+	/* 初始时输出高电平(?) */
 	GPIOA->ODR |= (0x7 << 4); 
 
 	/* 配置BLOOD_VALUEx为上拉/下拉输入模式 */
@@ -93,8 +93,11 @@ void motor_init(void)
 	GPIOB->CRH &= 0x0000FFFF;
 	GPIOB->CRH |= 0x88880000;
 	
-	GPIOC->CRL &= 0x00FFFFFF;
-	GPIOC->CRL |= 0x88000000;
+	GPIOC->CRL &= 0x00FFF000;
+	GPIOC->CRL |= 0x88000333;
 	GPIOC->CRH &= 0xFFFFFF00;
 	GPIOC->CRH |= 0x00000088;
+
+	/* MT_1, MT_2, MT_3初始输出高电平(?) */
+	GPIOC->ODR |= 0x7;
 }

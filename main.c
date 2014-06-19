@@ -29,16 +29,16 @@ int main(void)
 	led_init();
 
 	/* Printer initializing (UART1) */
-	printer_init();
+	printer_init(9600);
 
 	/* Card-reader initializing (UART2) */
-	reader_init();
+	reader_init(9600);
 
 	/* LCD initializing (UART3) */
-	lcd_init();
+	lcd_init(9600);
 
 	/* PC communication initializing (UART4) */
-	comm_init();
+	comm_init(9600);
 
 	while(1)
 	{

@@ -6,10 +6,11 @@
 */
 
 #include <stm32f10x_lib.h>
+#include "sys.h"
 #include "reader.h"
 
 /* IC Reader uses USART2 */
-void reader_init(void)
+void reader_init(u32 baud)
 {
 	float temp;
 	u16 mantissa, fraction;
