@@ -12,18 +12,17 @@
 ### List of Objects: adding '"lcd.o"'
 ### List of Objects: adding '"printer.o"'
 ### List of Objects: adding '"reader.o"'
-### List of Objects: adding '"sensor.o"'
-### List of Objects: adding '"motor.o"'
 ### List of Objects: adding '"storage.o"'
+### List of Objects: adding '"detector.o"'
 ### ADS-LD Command completed:
---device DARMSTM "stm32f10x.o" "main.o" "delay.o" "key.o" "led.o" "sys.o" "usart.o" "comm.o" "lcd.o" "printer.o" "reader.o" "sensor.o" "motor.o" "storage.o" --strict --scatter "bloodsediment.sct" 
+--device DARMSTM "stm32f10x.o" "main.o" "delay.o" "key.o" "led.o" "sys.o" "usart.o" "comm.o" "lcd.o" "printer.o" "reader.o" "storage.o" "detector.o" --strict --scatter "bloodsediment.sct" 
 --autoat --summary_stderr --info summarysizes --map --xref --callgraph --symbols 
 --info sizes --info totals --info unused --info veneers 
  --list ".\bloodsediment.map" -o "bloodsediment.axf"### Preparing Environment (PrepEnvAds)
 ### ADS-LD Output File: 'bloodsediment.axf'
 ### ADS-LD Command File: 'bloodsediment.lnp'
 ### Checking for dirty Components...
-### Creating CmdFile 'bloodsediment.lnp', Handle=0x00000128
+### Creating CmdFile 'bloodsediment.lnp', Handle=0x00000284
 ### Writing '.lnp' file
 ### ADS-LD Command file 'bloodsediment.lnp' is ready.
 ### ADS-LD: About to start ADS-LD Thread.

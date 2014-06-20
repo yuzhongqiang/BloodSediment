@@ -4,7 +4,7 @@
 #include "delay.h"	
 #include "led.h" 
 #include "key.h"
-#include "sensor.h"	 	 
+#include "detector.h"	 	 
 #include "printer.h"	 
 #include "lcd.h"	 
 #include "reader.h"	 
@@ -23,7 +23,7 @@ int main(void)
 	key_init();
 
 	/* Blood sedimentation sensors initializing */
-	sensor_init();
+	detector_init();
 	
 	/* LEDs initializing */
 	led_init();

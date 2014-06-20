@@ -11,7 +11,7 @@
 
 */
 
-void motor_init(void);
+void detector_init(void);
 
 
 #endif

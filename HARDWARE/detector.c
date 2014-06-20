@@ -4,7 +4,7 @@
 
 #include <stm32f10x_lib.h>
 #include "sys.h"
-#include "motor.h"
+#include "detector.h"
 
 /*
   MOTOR_ENx:  PA4	- 低电平有效
@@ -70,7 +70,7 @@ void timer_init(u16 freq_div, u16 arr)
 	/* 血沉值读数初始化 */
 
 	TIM3->DIER |= (1 << 0);   	//允许更新中断				
-	TIM3->CR1 |= 0x01;      	//使能定时器3
+	//TIM3->CR1 |= 0x01;      	//使能定时器3
   	nvic_init(1,3,TIM3_IRQChannel,2);//抢占1，子优先级3，组2
 }
 
@@ -101,3 +101,21 @@ void motor_init(void)
 	/* MT_1, MT_2, MT_3初始输出高电平(?) */
 	GPIOC->ODR |= 0x7;
 }
+
+void start_detect(void)
+{		
+	GPIOA->ODR &= ~(1 << 4);	//ENx置低，使能电机
+	TIM3->CR1 |= 0x01;      	//使能定时器3
+}
+
+void stop_detect(void)
+{
+	TIM3->CR1 &= ~(1 << 0);;    //使能定时器3
+ 	GPIOA->ODR |= (1 << 4);		//ENx置低，使能电机
+}
+
+void detector_init(void)
+{
+
+}
+
