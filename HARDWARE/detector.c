@@ -31,10 +31,10 @@
   步进电机的行程, 需要在联调时确定
 */
 #define MOTOR_MOVEMENT 500
-u32 position = 0;     // 马达当前位置
+static u32 position = 0;     // 马达当前位置
 
  /* 读取10路血沉值 */
-void read_channels(void)
+static void read_channels(void)
 {
 
 }
@@ -56,7 +56,7 @@ void TIM3_IRQHandler(void)
 	定时器的计数频率 = 72,000,000/freq_div
 	计数值 = count
 */
-void timer_init(u16 freq_div, u16 arr)
+static void timer_init(u16 freq_div, u16 arr)
 {
 	/*
 	通用定时器3初始化，时钟选择为APB2(72MHz)
@@ -78,7 +78,7 @@ void timer_init(u16 freq_div, u16 arr)
   GPIOA在sys.c中已经使能
   配置PA4, PA5, PA6为通用推挽输出方式
 */
-void motor_init(void)
+static void motor_init(void)
 {
 	/* ENx, DIRx, CLKx */
 	GPIOA->CRL &= 0xF000FFFF;
@@ -101,6 +101,14 @@ void motor_init(void)
 	/* MT_1, MT_2, MT_3初始输出高电平(?) */
 	GPIOC->ODR |= 0x7;
 }
+ 
+void detector_init(void)
+{
+	motor_init();
+
+	//Counter frequence is 10KHz, preload value is 500, total 50ms
+	timer_init(7200, 500);
+}
 
 void start_detect(void)
 {		
@@ -112,10 +120,5 @@ void stop_detect(void)
 {
 	TIM3->CR1 &= ~(1 << 0);;    //使能定时器3
  	GPIOA->ODR |= (1 << 4);		//ENx置低，使能电机
-}
-
-void detector_init(void)
-{
-
 }
 
