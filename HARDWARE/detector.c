@@ -6,6 +6,16 @@
 #include "sys.h"
 #include "detector.h"
 
+#define MAX_TUBES 4
+
+struct tube {
+  u8 inplace;   // 0 - 在位; 1 - 不在位
+  u8 remain_times;  // Remain times to move
+  u8 values[MAX_MEASURE_TIMES];
+};
+
+struct tube tubes[MAX_TUBES];
+
 /*
   MOTOR_ENx:  PA4	- 低电平有效
   MOTOR_DIRx: PA5
@@ -16,16 +26,16 @@
 #define MOTOR_CLKX PAout(6)	// PA6
 
 /* 血沉值IO */
-#define BLOOD_VALUE1  PBout(12)
-#define BLOOD_VALUE2  PBout(13)
-#define BLOOD_VALUE3  PBout(14)
-#define BLOOD_VALUE4  PBout(15)
-#define BLOOD_VALUE5  PCout(6)
-#define BLOOD_VALUE6  PCout(7)
-#define BLOOD_VALUE7  PCout(8)
-#define BLOOD_VALUE8  PCout(9)
-#define BLOOD_VALUE9  PAout(8)
-#define BLOOD_VALUE10 PAout(11)
+#define BLOOD_VALUE0  PBout(12)
+#define BLOOD_VALUE1  PBout(13)
+#define BLOOD_VALUE2  PBout(14)
+#define BLOOD_VALUE3  PBout(15)
+#define BLOOD_VALUE4  PCout(6)
+#define BLOOD_VALUE5  PCout(7)
+#define BLOOD_VALUE6  PCout(8)
+#define BLOOD_VALUE7  PCout(9)
+#define BLOOD_VALUE8  PAout(8)
+#define BLOOD_VALUE9 PAout(11)
 
 /*
   步进电机的行程, 需要在联调时确定
@@ -104,6 +114,39 @@ static void motor_init(void)
  
 void detector_init(void)
 {
+	u8 i = 0, j = 0;
+
+	for (i=0; i<MAX_TUBES; i++)
+	{
+		switch (i)
+		{
+		case 0:
+			tubes[i].inplace = BLOOD_VALUE0;
+			break;
+		case 1:
+			tubes[i].inplace = BLOOD_VALUE1;
+			break;
+		case 2:
+			tubes[i].inplace = BLOOD_VALUE2;
+			break;
+		case 3:
+			tubes[i].inplace = BLOOD_VALUE3;
+			break;
+#ifndef SMALL_MACHINE
+	  	case 4:
+		case 5:
+		case 6:
+		case 7:
+		case 8:
+		case 9:
+			break;
+#endif
+		}
+		tubes[i].remain_times = MAX_MEASURE_TIMES;
+		for	(j=0; j<MAX_MEASURE_TIMES; j++)
+			tubes[i].values[j] = 0;
+	}
+
 	motor_init();
 
 	//Counter frequence is 10KHz, preload value is 500, total 50ms
