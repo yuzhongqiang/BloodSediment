@@ -20,25 +20,28 @@ int main(void)
 	delay_init(72);	     //延时初始化 
 
 	/* keys initializing */
-	key_init();
+	/////key_init();
 
 	/* Blood sedimentation sensors initializing */
-	detector_init();
+	/////detector_init();
 	
 	/* LEDs initializing */
-	led_init();
+	//led_init();
 
-	/* Printer initializing (UART1) */
-	printer_init(9600);
+	/* Printer initializing (UART3) */
+	/////printer_init(9600);
 
 	/* Card-reader initializing (UART2) */
-	reader_init(9600);
+	/////reader_init(9600);
 
-	/* LCD initializing (UART3) */
+	/* LCD initializing (UART1) */
 	lcd_init(9600);
 
 	/* PC communication initializing (UART4) */
-	comm_init(9600);
+	/////comm_init(9600);
+
+	//测试代码，主要是看系统配置是否正确					  n
+	//led_run();
 
 	while(1)
 	{

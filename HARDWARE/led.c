@@ -1,6 +1,6 @@
 #include <stm32f10x_lib.h>	   
 #include "led.h"
-	   
+#include "delay.h"	   
 
 //初始化PA8和PD2为输出口.并使能这两个口的时钟		    
 //LED IO初始化
@@ -18,6 +18,19 @@ void led_init(void)
 	GPIOD->ODR|=1<<2;      //PD.2输出高 
 }
 
+//跑马灯测试程序
+void led_run(void)
+{
+ 	while(1)
+	{
+		LED0=0;
+		LED1=1;
+		delay_ms(300);
+		LED0=1;
+		LED1=0;
+		delay_ms(300);
+	}	
+}
 
 
 
