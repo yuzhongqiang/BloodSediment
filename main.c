@@ -40,11 +40,12 @@ int main(void)
 	/* PC communication initializing (UART4) */
 	/////comm_init(9600);
 
-	//测试代码，主要是看系统配置是否正确					  n
+	//测试代码，主要是看系统配置是否正确
 	//led_run();
 
 	while(1)
 	{
+		
 		;
 	}	 
 }
