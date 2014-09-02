@@ -40,14 +40,19 @@ int main(void)
 	/* PC communication initializing (UART4) */
 	/////comm_init(9600);
 
-	//测试代码，主要是看系统配置是否正确					  n
+	//测试代码，主要是看系统配置是否正确
 	//led_run();
 
 	start_detect();
 	while(!detect_finished())
 	{
+<<<<<<< HEAD
 		do_detect();
 		//print_result();
+=======
+		
+		;
+>>>>>>> 06b38c2d4242cfd2cbbed58288137ca6943eccbc
 	}	 
 }
 

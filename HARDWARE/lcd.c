@@ -9,7 +9,10 @@
 #include "sys.h"
 #include "lcd.h"
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 06b38c2d4242cfd2cbbed58288137ca6943eccbc
 /*
   LCD uses USART1
   Baudrate = fck/(16*USARTDIV)	; Baudrate is of float type

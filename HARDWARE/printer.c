@@ -9,11 +9,14 @@
 #include "sys.h"
 #include "printer.h"
 
+<<<<<<< HEAD
 /*
 	USART3中断服务程序
 	注意,读取USARTx->SR能避免莫名其妙的错误   	
 */
 
+=======
+>>>>>>> 06b38c2d4242cfd2cbbed58288137ca6943eccbc
 /* 打印机使用USART3 */
 void printer_init(u32 baud)
 {
@@ -34,7 +37,11 @@ void printer_init(u32 baud)
     mantissa <<= 4;
 	mantissa += fraction; 
  	USART3->BRR = mantissa; // 波特率设置	 
+<<<<<<< HEAD
 	USART3->CR1 |= 0X200C;  // 1位停止,无校验位.
+=======
+	USART3->CR1 |= 0X200C;  // 1位停止,无校验位.   
+>>>>>>> 06b38c2d4242cfd2cbbed58288137ca6943eccbc
 }
 
 u8 do_print(u8 ch)
