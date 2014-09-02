@@ -23,7 +23,7 @@ int main(void)
 	/////key_init();
 
 	/* Blood sedimentation sensors initializing */
-	/////detector_init();
+	detector_init();
 	
 	/* LEDs initializing */
 	//led_init();
@@ -35,7 +35,7 @@ int main(void)
 	/////reader_init(9600);
 
 	/* LCD initializing (UART1) */
-	lcd_init(9600);
+	/////lcd_init(9600);
 
 	/* PC communication initializing (UART4) */
 	/////comm_init(9600);
@@ -43,10 +43,11 @@ int main(void)
 	//测试代码，主要是看系统配置是否正确					  n
 	//led_run();
 
-	while(1)
+	start_detect();
+	while(!detect_finished())
 	{
-		
-		;
+		do_detect();
+		//print_result();
 	}	 
 }
 
