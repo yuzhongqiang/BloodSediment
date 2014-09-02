@@ -14,32 +14,21 @@
 /* 串口2中断服务程序
    注意,读取USARTx->SR能避免莫名其妙的错误
 */   	
-<<<<<<< HEAD
 u8 UART4_RX_BUF[64];     //接收缓冲,最大64个字节.
-=======
-u8 USART4_RX_BUF[64];     //接收缓冲,最大64个字节.
->>>>>>> 06b38c2d4242cfd2cbbed58288137ca6943eccbc
 
 /* 接收状态:
 	bit7 - 接收完成标志;
 	bit6 - 接收到0x0d;
 	bit5~0 - 接收到的有效字节数目
 */
-<<<<<<< HEAD
-u8 UART4_RX_STA = 0;       //接收状态标记	  
+u8 UART4_RX_STA = 0;       //接收状态标记
   
-void UART4_IRQHandler(void)
-=======
-u8 USART4_RX_STA = 0;       //接收状态标记	  
-  
-void USART4_IRQHandler(void)
->>>>>>> 06b38c2d4242cfd2cbbed58288137ca6943eccbc
+void UART4_IRQHandler(void)	
 {
 	u8 res;	    
 	if (UART4->SR & (1<<5))//接收到数据
 	{	 
 		res = UART4->DR; 
-<<<<<<< HEAD
 		if ((UART4_RX_STA & 0x80) == 0)	//接收未完成
 		{
 			if (UART4_RX_STA & 0x40)	//接收到了0x0d
@@ -48,21 +37,10 @@ void USART4_IRQHandler(void)
 					UART4_RX_STA = 0;	//接收错误,重新开始
 				else
 					UART4_RX_STA |= 0x80;	//接收完成了 
-=======
-		if ((USART4_RX_STA & 0x80) == 0)	//接收未完成
-		{
-			if (USART4_RX_STA & 0x40)	//接收到了0x0d
-			{
-				if (res != 0x0a)
-					USART4_RX_STA = 0;	//接收错误,重新开始
-				else
-					USART4_RX_STA |= 0x80;	//接收完成了 
->>>>>>> 06b38c2d4242cfd2cbbed58288137ca6943eccbc
 			}
 			else 	//还没收到0X0D
 			{	
 				if (res == 0x0d)
-<<<<<<< HEAD
 					UART4_RX_STA |= 0x40;
 				else
 				{
@@ -70,15 +48,6 @@ void USART4_IRQHandler(void)
 					UART4_RX_STA++;
 					if (UART4_RX_STA > 63)
 						UART4_RX_STA = 0;	//接收数据错误,重新开始接收	  
-=======
-					USART4_RX_STA |= 0x40;
-				else
-				{
-					USART4_RX_BUF[USART4_RX_STA & 0X3F] = res;
-					USART4_RX_STA++;
-					if (USART4_RX_STA > 63)
-						USART4_RX_STA = 0;	//接收数据错误,重新开始接收	  
->>>>>>> 06b38c2d4242cfd2cbbed58288137ca6943eccbc
 				}		 
 			}
 		}  		 									     
@@ -108,15 +77,23 @@ void comm_init(u32 baud)
 	UART4->CR1 |= 0X200C;  // 1位停止,无校验位.
 
 	//使能接收中断
-<<<<<<< HEAD
 	UART4->CR1 |= (1 << 8);    //PE中断使能
 	UART4->CR1 |= (1 << 5);    //接收缓冲区非空中断使能	    	
 	nvic_init(3, 3, UART4_IRQChannel, 2);//组2，最低优先级 
-=======
-	USART4->CR1 |= (1 << 8);    //PE中断使能
-	USART4->CR1 |= (1 << 5);    //接收缓冲区非空中断使能	    	
-	nvic_init(3, 3, USART4_IRQChannel, 2);//组2，最低优先级 
-#endif
->>>>>>> 06b38c2d4242cfd2cbbed58288137ca6943eccbc
 }
 
+u8 send_ch(u8 ch)
+{
+	while ((UART4->SR & 0x40) == 0)	//等待总线空闲
+		;
+
+	UART4->DR = ch;      
+	return ch;
+}
+
+/* str必须以\0字符结尾 */
+void send_str(u8* str)
+{
+ 	while (*str++)
+		print_ch(*str);
+}

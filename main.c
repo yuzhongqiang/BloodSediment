@@ -46,17 +46,10 @@ int main(void)
 	start_detect();
 	while(!detect_finished())
 	{
-<<<<<<< HEAD
 		do_detect();
 		//print_result();
-=======
-		
-		;
->>>>>>> 06b38c2d4242cfd2cbbed58288137ca6943eccbc
 	}	 
 }
-
-
 
 
 
