@@ -6,6 +6,7 @@
 #include "sys.h"
 #include "detector.h"
 #include "delay.h"
+#include "rtc.h"
 
 #define MAX_TUBES 4
 
@@ -17,6 +18,9 @@ u32 g_stp;
    1 - 电机运行到复位位置
    2 - 检测到血沉值改变
 */
+#define STOP_REASON_ARRIVED 0
+#define STOP_REASON_RESET	1
+#define STOP_REASON_VALUE_CHG 2
 u8  g_stop_reason = 0;
 
 #define MOTOR_MAX_TRIP  10000
@@ -26,12 +30,15 @@ u8  g_tripreset = 0;
 
 struct tube {
   u8 inplace;   		// 0 - 在位; 1 - 不在位
+  u8 status;            // 0 - 结束；1 - 挂起； 2 - 正在运行
+  u32 last_time;        // 上次检查结束的时间
   u8 remain_times;  	// Remain times to move
   u8 values[MAX_MEASURE_TIMES];
 };
 
 struct tube tubes[MAX_TUBES];
 u8 g_cur_chn = 0xff;   // 编号从0开始，当前正在检测的试管，0xff表示没有需要检查的试管
+u32 g_cur_trip;   //Current trip to change value
 
 void stop_chn(void)
 {
@@ -155,16 +162,22 @@ void TIM3_IRQHandler(void)
 
 		switch (g_stop_reason)
 		{
-		case 0:  // Trip arrived
+		case STOP_REASON_ARRIVED:  // Trip arrived
 			g_stp--;
 			if(g_stp==0)
 				g_busy=0;
 			break;
-		case 1:	 // Reset position arrived
+		case STOP_REASON_RESET:	 // Reset position arrived
 			g_busy = motor_reset()? 0 : 1;
 			break;
-		case 2:  // Blood value detected
+		case STOP_REASON_VALUE_CHG:  // Blood value detected
+			g_cur_trip++;
+			tubes[g_cur_chn].values[13 - tubes[g_cur_chn].remain_times] = g_cur_trip;
 			g_busy = read_channel(g_cur_chn)? 0 : 1;
+			if (!g_busy)
+				tubes[g_cur_chn].remain_times--;
+			if (!tubes[g_cur_chn].remain_times)
+				tubes[g_cur_chn].last_time = rtc_get_sec();
 			break;
 		}			   				     	    	
 	}				   
@@ -312,9 +325,36 @@ u8 detect_finished(void)
 	return 1;
 }
 
+void select_channel(void)
+{
+	u8 i;
+
+	g_cur_trip = 0;
+	g_cur_chn = 0xff;
+	for (i=0; i<MAX_TUBES; i++)
+	{
+		if (!tubes[i].inplace)
+			continue;
+		else
+		{
+			if ((tubes[i].remain_times != 0) &&
+				(rtc_get_sec()-tubes[i].last_time > 60))
+			{
+				g_cur_chn = i;
+				return;
+			}
+		}
+	}
+}
+
 void do_detect(void)
 {
+	if (g_cur_chn == 0xff)
+		return;
 
+	tubes[g_cur_chn].status = 2;  // Running
+	g_stop_reason = STOP_REASON_VALUE_CHG;
+	motor_drive(1, MOTOR_MAX_TRIP);
 }
 
 /* 返回值：
@@ -339,13 +379,13 @@ void set_direction(u8 dir)
 		GPIOA->ODR &= 0xffdf;	   
 }
 
-void motor_drive(u8 dir,u32 stp)
+void motor_drive(u8 dir, u32 stp)
 {
 	set_direction(dir);
 	g_busy = 1;
 	g_stp = stp*2;
 	start_motor();
 	while (g_busy);
-		stop_detect();		
-			
-}		
+		stop_detect();			
+}
+

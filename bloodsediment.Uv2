@@ -20,6 +20,7 @@ File 3,1,<.\HARDWARE\printer.c><printer.c>
 File 3,1,<.\HARDWARE\reader.c><reader.c>
 File 3,1,<.\HARDWARE\storage.c><storage.c>
 File 3,1,<.\HARDWARE\detector.c><detector.c>
+File 3,1,<.\HARDWARE\rtc.c><rtc.c>
 
 
 Options 1,0,0  // Target 'Target 1'

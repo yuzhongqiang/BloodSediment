@@ -8,7 +8,8 @@
 #include "printer.h"	 
 #include "lcd.h"	 
 #include "reader.h"	 
-#include "comm.h"	 
+#include "comm.h"
+#include "rtc.h"	 
 
 int main(void)
 {			
@@ -22,6 +23,9 @@ int main(void)
 	/* keys initializing */
 	/////key_init();
 
+	/* Real time init */
+	rtc_init();
+	
 	/* Blood sedimentation sensors initializing */
 	detector_init();
 	delay_ms(3000);
