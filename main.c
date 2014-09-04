@@ -24,12 +24,13 @@ int main(void)
 
 	/* Blood sedimentation sensors initializing */
 	detector_init();
+	delay_ms(3000);
 	
 	/* LEDs initializing */
 	//led_init();
 
 	/* Printer initializing (UART3) */
-	/////printer_init(9600);
+	printer_init(9600);
 
 	/* Card-reader initializing (UART2) */
 	/////reader_init(9600);
@@ -43,11 +44,33 @@ int main(void)
 	//测试代码，主要是看系统配置是否正确
 	//led_run();
 
-	start_detect();
-	while(!detect_finished())
+//	start_detect();
+	//GPIOA->ODR &= 0xff8f;
+	//GPIOA->ODR |= (0x2 << 4); 
+	//GPIOA->ODR |= (0x1 << 4); 
+
+	while(1/*!detect_finished()*/)
 	{
-		do_detect();
+		
+		//motor_drive(0,10);
+		//delay_ms(5000);
+		//print_str("abcdefghijklmnopqrstuvwxyz");
+		//start_chn0();
+		//delay_ms(1000); 
+		//start_chn1();
+		//delay_ms(1000);
+		//start_chn2();
+		//delay_ms(1000);
+		//start_chn3();
+		//delay_ms(1000);
+		//Moter_Drive(1,1500);
+		//delay_ms(500);
+		//do_detect();
 		//print_result();
+		//GPIOA->ODR &= 0xffef;
+		//delay_ms(1);
+		//GPIOA->ODR |= (0x1 << 4);
+		//delay_ms(1); 
 	}	 
 }
 

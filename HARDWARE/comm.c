@@ -95,5 +95,5 @@ u8 send_ch(u8 ch)
 void send_str(u8* str)
 {
  	while (*str++)
-		print_ch(*str);
+		send_ch(*str);
 }

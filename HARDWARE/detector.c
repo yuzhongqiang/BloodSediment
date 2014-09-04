@@ -5,8 +5,24 @@
 #include <stm32f10x_lib.h>
 #include "sys.h"
 #include "detector.h"
+#include "delay.h"
 
 #define MAX_TUBES 4
+
+u8 g_busy = 0;
+u32 g_stp;
+
+/* 电机停止单向运行的原因：
+   0 - 运行距离达到
+   1 - 电机运行到复位位置
+   2 - 检测到血沉值改变
+*/
+u8  g_stop_reason = 0;
+
+#define MOTOR_MAX_TRIP  10000
+u32 g_trip;
+u8  g_tripreset = 0;
+
 
 struct tube {
   u8 inplace;   		// 0 - 在位; 1 - 不在位
@@ -15,13 +31,9 @@ struct tube {
 };
 
 struct tube tubes[MAX_TUBES];
-u8 current_tube = 0xff;   // 当前正在检测的试管，0xff表示没有需要检查的试管
+u8 g_cur_chn = 0xff;   // 编号从0开始，当前正在检测的试管，0xff表示没有需要检查的试管
 
-//u8 chn_data[2][10] = {
-//  {0,0}, {}, {}, {}, {}, {}, {}, {}, {}, {}
-//};
-
-void stop_chns(void)
+void stop_chn(void)
 {
  	GPIOB->ODR |= 0x3;
 	GPIOC->ODR |= (0x3 << 4);
@@ -29,48 +41,39 @@ void stop_chns(void)
 
 void start_chn(u8 chn)
 {
- 	GPIOB->ODR &= 0xfffc;
-	GPIOC->ODR &= 0xffcf;
-	
-}
-
-void start_chn0(void)
-{
-	GPIOB->ODR &= 0xfffc;
-	GPIOC->ODR &= 0xffcf;
-}
-
-void start_chn1(void)
-{
-	GPIOB->ODR &= 0xfffc;
-	GPIOC->ODR &= 0xffcf;
-	GPIOC->ODR |= (0x1 << 4);
-}
-
-void start_chn2(void)
-{
-	GPIOB->ODR &= 0xfffc;
-	GPIOC->ODR &= 0xffcf;
-	GPIOC->ODR |= (0x2 << 4);
-}
-
-void start_chn3(void)
-{
-	GPIOB->ODR &= 0xfffc;
-	GPIOC->ODR &= 0xffcf;
-	GPIOC->ODR |= (0x3 << 4);
-}
-
+	switch (chn)
+	{
+	 case 0:
+		GPIOB->ODR &= 0xfffc;
+		GPIOC->ODR &= 0xffcf;
+		break;
+	 case 1:
+		GPIOB->ODR &= 0xfffc;
+		GPIOC->ODR &= 0xffcf;
+		GPIOC->ODR |= (0x2 << 4);
+		break;
+	 case 2:
+		GPIOB->ODR &= 0xfffc;
+		GPIOC->ODR &= 0xffcf;
+		GPIOC->ODR |= (0x1 << 4);
+		break;
+	 case 3:
+		GPIOB->ODR &= 0xfffc;
+		GPIOC->ODR &= 0xffcf;
+		GPIOC->ODR |= (0x3 << 4);
+		break;
 #if !defined(SMALL_MACHINE)
-void start_chn4(void)
-{
-	GPIOB->ODR &= 0xfffc;
-	GPIOC->ODR &= 0xffcf;
-
-	GPIOB->ODR |= 0x3;
-	GPIOC->ODR |= (0x3 << 4);
-}
+	case 4:
+		GPIOB->ODR &= 0xfffc;
+		GPIOC->ODR &= 0xffcf;
+		GPIOB->ODR |= 0x3;
+		GPIOC->ODR |= (0x3 << 4);
 #endif
+	default:
+		break;
+	} 		
+}
+
 
 /*
   MOTOR_ENx:  PA4	- 低电平有效
@@ -97,42 +100,73 @@ void start_chn4(void)
   步进电机的行程, 需要在联调时确定
 */
 #define MOTOR_MOVEMENT 500
-static u32 position = 0;     // 马达当前位置
+//static u32 position = 0;     // 马达当前位置
 
- /* 读取10路血沉值 */
-static void read_channels(void)
+/* 读取10路血沉值,返回值0、1 */
+u8 read_channel(u8 chn)
 {
+	switch (chn)
+	{
+	 case 0:
+	 	return BLOOD_VALUE0;
+	 case 1:
+	 	return BLOOD_VALUE1;
+	 case 2:
+	 	return BLOOD_VALUE2;
+	 case 3:
+	 	return BLOOD_VALUE3;
+#ifndef SMALL_MACHINE
 
+#endif
+	default:
+		return 1;
+	}
 }
 
-u8 is_motor_reset(void)
+/*
+	系统上电时电机到复位位置
+	必须在电机初始化后才执行	
+*/
+void reset_motor(void)
 {
-	return 1;
-}
+	while (motor_reset())
+	{
+	 	motor_drive(1, 250);
+	}
 
-void motor_step_down(void)
-{
-}
-
-void motor_step_up(void)
-{
+	while (!motor_reset())
+	{
+		 motor_drive(0, 50);
+		 //delay_ms(500);
+	}
 }
 
 //定时器3中断服务程序	 
 void TIM3_IRQHandler(void)
 { 	
-	u16 temp;
-
-	temp = GPIOA->ODR;
-	temp ^= 0x0010;
-	GPIOA->ODR = temp;
+	u16 temp = 0;
+//	u8 is_reset;
 		    		  			    
 	if (TIM3->SR & 0X0001)  //溢出中断
 	{
-		//position++;
-		//read_channels();
+		temp = GPIOA->ODR;
+		temp ^= 0x0010;
+		GPIOA->ODR = temp;
 
-		//MOTOR_CLKX = !MOTOR_CLKX;			    				   				     	    	
+		switch (g_stop_reason)
+		{
+		case 0:  // Trip arrived
+			g_stp--;
+			if(g_stp==0)
+				g_busy=0;
+			break;
+		case 1:	 // Reset position arrived
+			g_busy = motor_reset()? 0 : 1;
+			break;
+		case 2:  // Blood value detected
+			g_busy = read_channel(g_cur_chn)? 0 : 1;
+			break;
+		}			   				     	    	
 	}				   
 	TIM3->SR &= ~(1 << 0);	//清除中断标志位 	    
 }
@@ -141,6 +175,7 @@ void TIM3_IRQHandler(void)
 	定时器的计数频率 = 72,000,000/freq_div
 	计数值 = count
 */
+#if 1
 static void timer_init(u16 freq_div, u16 arr)
 {
 	/*
@@ -158,6 +193,7 @@ static void timer_init(u16 freq_div, u16 arr)
 	//TIM3->CR1 |= 0x01;      	//使能定时器3
   	nvic_init(1,3,TIM3_IRQChannel,2);//抢占1，子优先级3，组2
 }
+#endif
 
 /*
   GPIOA在sys.c中已经使能
@@ -170,13 +206,13 @@ static void motor_init(void)
 	GPIOA->CRL |= 0x03330000;
 	//GPIOA->CRL |= 0x0BBB0000;
 
-	/* 初始时输出低电平(?)，Enx/DIRx High active */
-	GPIOA->ODR |= (0x7 << 4); 
-	//GPIOA->ODR &= 0xff8f;
+	/* 初始时输出低电平，Enx low active */
+	GPIOA->ODR |= 0x0040;
 			
 	/* 配置INA(PC4),INB(PC5),INC(PB0),IND(PB1)为输出模式 */
-	GPIOC->CRL &= 0xFF00FFFF;
-	GPIOC->CRL |= 0x00330000;
+	/* 配置PC7为输入模式 */
+	GPIOC->CRL &= 0x0F00FFFF;
+	GPIOC->CRL |= 0x80330000;
 	GPIOB->CRL &= 0xFFFFFF00;
 	GPIOB->CRL |= 0x00000033;
 
@@ -199,32 +235,34 @@ static void motor_init(void)
 	GPIOC->ODR |= 0x1;    //0x7;
 
 	// 电机回复到起始位置
-	while (!is_motor_reset())
-		 motor_step_down();
+	reset_motor();
 }
  
 void detector_init(void)
 {
 	u8 i = 0, j = 0;
 
+	//Counter frequence is 10KHz, preload value is 500, total 50ms
+	timer_init(7200, 1);
+
+	motor_init();
+
+	//初始化血沉值
 	for (i=0; i<MAX_TUBES; i++)
 	{
+		start_chn(i);
 		switch (i)
 		{
 		case 0:
-			start_chn0();
 			tubes[i].inplace = BLOOD_VALUE0;
 			break;
 		case 1:
-			start_chn1();
 			tubes[i].inplace = BLOOD_VALUE1;
 			break;
 		case 2:
-			start_chn2();
 			tubes[i].inplace = BLOOD_VALUE2;
 			break;
 		case 3:
-			start_chn3();
 			tubes[i].inplace = BLOOD_VALUE3;
 			break;
 #ifndef SMALL_MACHINE
@@ -237,29 +275,26 @@ void detector_init(void)
 			break;
 #endif
 		}
-		stop_chns();
+		if (tubes[i].inplace && g_cur_chn == 0xff)
+			g_cur_chn = i;
+
+		stop_chn();
 		tubes[i].remain_times = MAX_MEASURE_TIMES;
 		for	(j=0; j<MAX_MEASURE_TIMES; j++)
 			tubes[i].values[j] = 0;
 	}
-
-	//Counter frequence is 10KHz, preload value is 500, total 50ms
-	timer_init(7200, 50000);
-
-	motor_init();
 }
 
-void start_detect(void)
+void start_motor(void)
 {							
-	GPIOA->ODR |= (0x6 << 4);
-	//GPIOA->ODR &= 0xff9f;
+	GPIOA->ODR &= 0xffBf;
 	TIM3->CR1 |= 0x01;      	//使能定时器3
 }
 
 void stop_detect(void)
 {
 	TIM3->CR1 &= ~(1 << 0);;    //关闭定时器3
- 	GPIOA->ODR &= 0xff8f;	//ENx置低，关闭电机
+ 	GPIOA->ODR |= 0x0040;	//ENx置高，关闭电机
 }
 
 u8 detect_finished(void)
@@ -270,7 +305,7 @@ u8 detect_finished(void)
 	{
 		if (tubes[i].inplace && (tubes[i].remain_times > 0))
 		{
-			current_tube = i;
+			g_cur_chn = i;
 			return 0;
 		}
 	}
@@ -281,3 +316,36 @@ void do_detect(void)
 {
 
 }
+
+/* 返回值：
+	1 - 电机运行到最下方
+	0 - 电机没有运行到最下方
+*/
+u8 motor_reset(void)
+{
+	u16 pcv = GPIOC->IDR;
+  	return (pcv & 0x0080) ? 1 : 0;
+}
+
+ /* 设置电机方向
+    0 - 向下
+	1 - 向上
+*/
+void set_direction(u8 dir)
+{
+	if (!dir)
+		GPIOA->ODR |= 0x0020;
+	else
+		GPIOA->ODR &= 0xffdf;	   
+}
+
+void motor_drive(u8 dir,u32 stp)
+{
+	set_direction(dir);
+	g_busy = 1;
+	g_stp = stp*2;
+	start_motor();
+	while (g_busy);
+		stop_detect();		
+			
+}		

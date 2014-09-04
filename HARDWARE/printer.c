@@ -49,6 +49,6 @@ u8 print_ch(u8 ch)
 /* str±ØĞëÒÔ\0×Ö·û½áÎ² */
 void print_str(u8* str)
 {
- 	while (*str++)
-		print_ch(*str);
+ 	while (*str)
+		print_ch(*str++);
 }

@@ -10,9 +10,10 @@ void printer_init(u32);
 
 
 
+u8 print_ch(u8 ch);
 
-
-
+/* str±ØĞëÒÔ\0×Ö·û½áÎ² */
+void print_str(u8* str);
 
 
 
