@@ -5,6 +5,7 @@
 #include <stm32f10x_lib.h>
 #include "sys.h"
 #include "channel.h"
+#include "motor.h"
 #include "delay.h"
 #include "rtc.h"
 
@@ -13,14 +14,42 @@ u8 g_cur_chn = 0xff;   // ±àºÅ´Ó0¿ªÊ¼£¬µ±Ç°ÕýÔÚ¼ì²âµÄÊÔ¹Ü£¬0xff±íÊ¾Ã»ÓÐÐèÒª¼ì²éµ
 extern u8 g_scan_stage;
 u8 g_need_reset;  // Ò»ÌËÉ¨Ãè½áÊø£¬Ö¸Ê¾ÐèÒª»Ø¸´¸´Î»×´Ì¬
 
-void channel_close(void)
+/*
+  MOTOR_ENx:  PA4	- µÍµçÆ½ÓÐÐ§
+  MOTOR_DIRx: PA5
+  MOTOR_CLKx: PA6 - ×î¿ì 100us
+*/
+#define MOTOR_ENX  PAout(6)	// PA4
+#define MOTOR_DIRX PAout(5)	// PA5
+#define MOTOR_CLKX PAout(4)	// PA6
+
+/* Ñª³ÁÖµIO */
+#define BLOOD_VALUE0  PBin(12)
+#define BLOOD_VALUE1  PBin(13)
+#define BLOOD_VALUE2  PBin(14)
+#define BLOOD_VALUE3  PBin(15)
+#define BLOOD_VALUE4  PCin(6)
+#define BLOOD_VALUE5  PCin(7)
+#define BLOOD_VALUE6  PCin(8)
+#define BLOOD_VALUE7  PCin(9)
+#define BLOOD_VALUE8  PAin(8)
+#define BLOOD_VALUE9 PAin(11)
+
+void channel_close(void);
+void channel_open(u8 chn);
+u8 channel_is_opaque(u8 chn);
+void _channel_config(void);
+void channel_scan_all(void);
+void channel_select_current(void);
+
+static void channel_close(void)
 {
  	GPIOB->ODR |= 0x3;
 	GPIOC->ODR |= (0x3 << 4);
 	delay_ms(1);
 }
 
-void channel_open(u8 chn)
+static void channel_open(u8 chn)
 {
 	switch (chn)
 	{
@@ -55,34 +84,6 @@ void channel_open(u8 chn)
 	} 	
 	delay_ms(5);	
 }
-
-
-/*
-  MOTOR_ENx:  PA4	- µÍµçÆ½ÓÐÐ§
-  MOTOR_DIRx: PA5
-  MOTOR_CLKx: PA6 - ×î¿ì 100us
-*/
-#define MOTOR_ENX  PAout(6)	// PA4
-#define MOTOR_DIRX PAout(5)	// PA5
-#define MOTOR_CLKX PAout(4)	// PA6
-
-/* Ñª³ÁÖµIO */
-#define BLOOD_VALUE0  PBin(12)
-#define BLOOD_VALUE1  PBin(13)
-#define BLOOD_VALUE2  PBin(14)
-#define BLOOD_VALUE3  PBin(15)
-#define BLOOD_VALUE4  PCin(6)
-#define BLOOD_VALUE5  PCin(7)
-#define BLOOD_VALUE6  PCin(8)
-#define BLOOD_VALUE7  PCin(9)
-#define BLOOD_VALUE8  PAin(8)
-#define BLOOD_VALUE9 PAin(11)
-
-/*
-  ²½½øµç»úµÄÐÐ³Ì, ÐèÒªÔÚÁªµ÷Ê±È·¶¨
-*/
-#define MOTOR_MOVEMENT 500
-//static u32 position = 0;     // Âí´ïµ±Ç°Î»ÖÃ
 
 /* ¶ÁÈ¡10Â·Ñª³ÁÖµ,·µ»ØÖµ0¡¢1 */
 u8 channel_is_opaque(u8 chn)
@@ -134,6 +135,78 @@ static void _channel_config(void)
 	GPIOC->CRH |= 0x00000088;
 }
  
+static void channel_scan_all(void)
+{
+    u8 i, j;
+    
+	for (i=0; i<MAX_CHANNELS; i++)
+	{
+	    if  (tubes[i].status != CHN_STATUS_NONE)
+            continue;
+        
+		channel_open(i);
+		switch (i)
+		{
+		case 0:
+			tubes[i].inplace = !BLOOD_VALUE0;
+			break;
+		case 1:
+			tubes[i].inplace = !BLOOD_VALUE1;
+			break;
+#ifndef SMALL_MACHINE   //For Test
+		case 2:
+			tubes[i].inplace = !BLOOD_VALUE2;
+			break;
+		case 3:
+			tubes[i].inplace = !BLOOD_VALUE3;
+			break;
+//#ifndef SMALL_MACHINE
+	  	case 4:
+		case 5:
+		case 6:
+		case 7:
+		case 8:
+		case 9:
+			break;
+#endif
+		}			
+		channel_close();
+        
+            if (tubes[i].inplace)
+            {
+                tubes[i].status = CHN_STATUS_WAITING;
+			tubes[i].insert_time = rtc_get_sec();
+            }
+		else
+                tubes[i].status = CHN_STATUS_NONE;
+            
+		tubes[i].remains = MAX_MEASURE_TIMES;
+		for	(j=0; j<MAX_MEASURE_TIMES; j++)
+			tubes[i].values[j] = 0;
+	}
+}
+
+static void channel_select_current(void)
+{
+	u8 i;
+
+	g_cur_chn = 0xff;
+	for (i=0; i<MAX_CHANNELS; i++)
+	{
+		if (!tubes[i].inplace)
+			continue;
+		else
+		{
+			if (((tubes[i].remains != 0) && (rtc_get_sec()-tubes[i].last_scan_time > MOTOR0_INTERVAL_TIME)) ||
+				(tubes[i].remains == 13))
+			{
+				g_cur_chn = i;
+				return;
+			}
+		}
+	}
+}
+
 void channel_init(void)
 {
 	u8 i = 0, j = 0;
@@ -187,94 +260,29 @@ void channel_init(void)
 	}
 }
 
-void channel_scan_all(void)
-{
-    u8 i, j;
-    
-	for (i=0; i<MAX_CHANNELS; i++)
-	{
-	    if  (tubes[i].status != CHN_STATUS_NONE)
-            continue;
-        
-		channel_open(i);
-		switch (i)
-		{
-		case 0:
-			tubes[i].inplace = !BLOOD_VALUE0;
-		case 1:			break;
-
-			tubes[i].inplace = !BLOOD_VALUE1;
-			break;
-#ifndef SMALL_MACHINE
-		case 2:
-			tubes[i].inplace = !BLOOD_VALUE2;
-			break;
-		case 3:
-			tubes[i].inplace = !BLOOD_VALUE3;
-			break;
-
-	  	case 4:
-		case 5:
-		case 6:
-		case 7:
-		case 8:
-		case 9:
-			break;
-#endif
-		}			
-		channel_close();
-        
-            if (tubes[i].inplace)
-            {
-                tubes[i].status = CHN_STATUS_WAITING;
-			tubes[i].insert_time = rtc_get_sec();
-            }
-		else
-                tubes[i].status = CHN_STATUS_NONE;
-            
-		tubes[i].remains = MAX_MEASURE_TIMES;
-		for	(j=0; j<MAX_MEASURE_TIMES; j++)
-			tubes[i].values[j] = 0;
-	}
-}
-
-void channel_select_current(void)
-{
-	u8 i;
-
-	g_cur_chn = 0xff;
-	for (i=0; i<MAX_CHANNELS; i++)
-	{
-		if (!tubes[i].inplace)
-			continue;
-		else
-		{
-			if (((tubes[i].remains != 0) && (rtc_get_sec()-tubes[i].last_time > MOTOR0_INTERVAL_TIME)) ||
-				(tubes[i].remains == 13))
-			{
-				g_cur_chn = i;
-				return;
-			}
-		}
-	}
-}
-
-void channel_scanning(void)
-{
-	tubes[g_cur_chn].status = CHN_STATUS_SCANNING;
-	channel_open(g_cur_chn);
-	motor_scan_chn(0, g_cur_chn);
-}
-
 void channel_main()
 {
-	channel_scan_all();
-	
-	if (g_scan_stage == SCAN_STAGE_SCANFINISH)
-		channel_select_current();		
-
-	if (g_scan_stage 
-		channel_scanning();
-		
+	switch (g_scan_stage)
+	{
+	case SCAN_STAGE_INITED:
+		channel_scan_all();
+		channel_select_current();
+		g_scan_stage = SCAN_STAGE_RESETING;
+		motor_reset_position_blocked(0);
+		break;
+	case SCAN_STAGE_RESETING:
+		break;
+	case SCAN_STAGE_RESETED:
+		g_scan_stage = SCAN_STAGE_SCANNING;
+		motor_scan_chn(0, g_cur_chn);
+		break;
+	case SCAN_STAGE_SCANNING:
+		break;
+	case SCAN_STAGE_SCANFINISH:
+		motor_reset_position_blocked(0);		
+		break;
+	default:
+		break;
+	}		
 }
 

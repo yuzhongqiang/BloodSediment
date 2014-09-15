@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include "sys.h"
 #include "printer.h"
-#include "detector.h"
+#include "channel.h"
 #include "delay.h"
 
 extern	struct tube tubes[MAX_CHANNELS];
@@ -58,7 +58,7 @@ void print_str(char* str)
 		print_ch(*str++);
 }
 
-void do_print(void)
+void printer_main(void)
 {
 	u8 i, j;
       char buf[100];

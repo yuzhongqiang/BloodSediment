@@ -3,11 +3,26 @@
 */
 
 #include <stm32f10x_lib.h>
-#include "motor.h"
+#include <stdio.h>
 #include "sys.h"
-#include "detector.h"
+#include "motor.h"
+#include "channel.h"
 #include "delay.h"
 #include "rtc.h"
+
+static void _timer_init(u16 freq_div, u16 arr);
+static void _motor_startup(u8 motor_id);
+static void _motor_stop(u8 motor_id);
+static u8 _motor0_is_reset(void);
+static u8 _motor1_is_reset(void);
+static u8 _motor2_is_reset(void);
+static void _motor_set_dir(u8 dir);
+static u8 _fn_motor_move_steps(void);
+static u8 _fn_motor0_scan_chn(void);
+static u8 _fn_motor0_reset_position_blocked(void);
+#if 0
+static u8 _fn_motor0_reset_position(void);
+#endif
 
 /*
   MOTOR_ENx:  PA4	- 低电平有效
@@ -22,7 +37,7 @@
 TIMER_FN g_timer_fn = NULL;
 /* 要求移动的步数*/
 static u32 g_demand_steps;   
-u8 g_scan_stage = SCAN_STAGE_INIT;
+u8 g_scan_stage = SCAN_STAGE_INITED;
 
 u32 g_cur_trip0;
 u32 g_cur_trip1;
@@ -69,34 +84,7 @@ static void _timer_init(u16 freq_div, u16 arr)
 	TIM3->PSC = freq_div - 1;	// 预分频器7200,得到10Khz的计数时钟
 	//TIM3->DIER |= (1 << 0);   	//允许更新中断		
 	
-  	nvic_init(1,3,TIM3_IRQChannel,2);//抢占1，子优先级3，组2
-}
-
-/*
-  GPIOA在sys.c中已经使能
-  配置PA4, PA5, PA6为通用推挽输出方式
-*/
-void motor_init(void)
-{
-	_timer_init(7200, 1);
-	delay_ms(10);
-	
-	/* ENx(PA6), DIRx(PA5), CLKx(PA4)，输出模式 */
-	GPIOA->CRL &= 0xF000FFFF;
-	GPIOA->CRL |= 0x03330000;
-
-	/* 初始时输出高电平，Enx low active */
-	GPIOA->ODR |= 0x0040;
-
-	/* MT_1(PC0), MT_2(PC1), MT_3(PC2) initialization, disable */
-	GPIOC->CRL &= 0xFFFFF000;
-	GPIOC->CRL |= 0x00000333;
-	GPIOC->ODR &= 0xfff8;	
-									
-	// 电机回复到起始位置
-	motor_reset_position(0);
-	//motor_reset_position(1);
-	//motor_reset_position(2);
+  	nvic_init(1,3, TIM3_IRQChannel,2);//抢占1，子优先级3，组2
 }
 
 static void _motor_startup(u8 motor_id)
@@ -200,9 +188,9 @@ void motor_move_steps_blocked(u8 motor_id, u8 dir, u32 steps)
 }
 
 /**************************************************************
-						Motor reset routines
+						Motor reset routines(blocked)
 **************************************************************/
-static u8 _fn_motor0_reset_position(void)
+static u8 _fn_motor0_reset_position_blocked(void)
 {
 	if (_motor0_is_reset())
 	{
@@ -214,16 +202,15 @@ static u8 _fn_motor0_reset_position(void)
 		return 1;
 }
 
-void motor_reset_position(u8 motor_id)
+void motor_reset_position_blocked(u8 motor_id)
 {
 	switch (motor_id)
 	{
 	case 0:
-		g_scan_stage = SCAN_STAGE_RESETING;
 		if (_motor0_is_reset())
 			motor_move_steps_blocked(0, MOTOR0_DIR_UP, 200);
 		
-		g_timer_fn = _fn_motor0_reset_position;
+		g_timer_fn = _fn_motor0_reset_position_blocked;
 		_motor_set_dir(MOTOR0_DIR_DOWN);
 		_motor_startup(motor_id);			
 		break;
@@ -236,16 +223,50 @@ void motor_reset_position(u8 motor_id)
 	}
 }
 
+#if 0
+/**************************************************************
+					Motor reset routines(non block)
+**************************************************************/
+static u8 _fn_motor0_reset_position(void)
+{
+	if (_motor0_is_reset())
+	{
+		g_cur_trip0 = 0;
+		g_scan_stage = SCAN_STAGE_SCANFINISH;
+		return 0;
+	}
+	else
+		return 1;
+}
+
+void motor_reset_position(u8 motor_id)
+{
+	switch (motor_id)
+	{
+	case 0:
+		g_timer_fn = _fn_motor0_reset_position;
+		_motor_set_dir(MOTOR0_DIR_DOWN);
+		_motor_startup(motor_id);			
+		break;
+	case 1:
+		break;
+	case 2:
+		break;
+	default:
+		break;
+	}
+}
+#endif
+
 /**************************************************************
 						Motor reset routines
 **************************************************************/
 
 extern struct tube tubes[MAX_CHANNELS];
 extern u8 g_cur_chn;
-extern u8 g_is_scanning;
 extern u8 channel_is_opaque(u8 chn);
 
-u8 _fn_motor0_scan_chn(void)
+static u8 _fn_motor0_scan_chn(void)
 {
 	u16 temp;
 
@@ -267,7 +288,6 @@ should_stop:
 	tubes[g_cur_chn].values[13 - tubes[g_cur_chn].remains] = g_cur_trip0;
 	tubes[g_cur_chn].remains--;
 	tubes[g_cur_chn].last_scan_time = rtc_get_sec();
-	g_is_scanning = 0;
 	g_scan_stage = SCAN_STAGE_SCANFINISH;
 	return 0;		
 }
@@ -277,9 +297,35 @@ void motor_scan_chn(u8 motor_id, u8 chn_id)
 	g_scan_stage = SCAN_STAGE_SCANNING;
 	g_timer_fn = _fn_motor0_scan_chn;
 	tubes[chn_id].scan_times[13 - tubes[chn_id].remains] = rtc_get_sec();
-	g_is_scanning = 1;
 	
 	_motor_set_dir(MOTOR0_DIR_UP);
 	_motor_startup(motor_id);	
+}
+
+/*
+  GPIOA在sys.c中已经使能
+  配置PA4, PA5, PA6为通用推挽输出方式
+*/
+void motor_init(void)
+{
+	_timer_init(7200, 1);
+	delay_ms(10);
+	
+	/* ENx(PA6), DIRx(PA5), CLKx(PA4)，输出模式 */
+	GPIOA->CRL &= 0xF000FFFF;
+	GPIOA->CRL |= 0x03330000;
+
+	/* 初始时输出高电平，Enx low active */
+	GPIOA->ODR |= 0x0040;
+
+	/* MT_1(PC0), MT_2(PC1), MT_3(PC2) initialization, disable */
+	GPIOC->CRL &= 0xFFFFF000;
+	GPIOC->CRL |= 0x00000333;
+	GPIOC->ODR &= 0xfff8;	
+									
+	// 电机回复到起始位置
+	motor_reset_position_blocked(0);
+	//motor_reset_position(1);
+	//motor_reset_position(2);
 }
 

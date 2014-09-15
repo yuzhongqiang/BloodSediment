@@ -10,7 +10,7 @@
 
 
 void printer_init(u32);
-
+void printer_main(void);
 
 
 
