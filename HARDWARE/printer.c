@@ -6,8 +6,13 @@
 */
 
 #include <stm32f10x_lib.h>
+#include <stdio.h>
 #include "sys.h"
 #include "printer.h"
+#include "detector.h"
+#include "delay.h"
+
+extern	struct tube tubes[MAX_CHANNELS];
 
 /*
 	USART3中断服务程序
@@ -37,7 +42,7 @@ void printer_init(u32 baud)
 	USART3->CR1 |= 0X200C;  // 1位停止,无校验位.
 }
 
-u8 print_ch(u8 ch)
+u8 print_ch(char ch)
 {
 	while ((USART3->SR & 0x40) == 0)	//等待总线空闲
 		;
@@ -47,8 +52,42 @@ u8 print_ch(u8 ch)
 }
 
 /* str必须以\0字符结尾 */
-void print_str(u8* str)
+void print_str(char* str)
 {
  	while (*str)
 		print_ch(*str++);
+}
+
+void do_print(void)
+{
+	u8 i, j;
+      char buf[100];
+
+	for (i=0; i<MAX_CHANNELS; i++)
+	{
+		if (tubes[i].status == CHN_STATUS_FINISH)
+		{
+		    print_str("*************************\n");
+
+                for (j=0; j<13; j++)
+                {
+                    sprintf(buf, "ESR_NO.%d_Time%d: %d\n", i, j+1, tubes[i].values[j]/2);
+					print_str(buf);
+                }
+
+            print_str("*************************\n");
+			delay_ms(1000);
+			tubes[i].status = CHN_STATUS_NONE;
+		}
+            else
+                continue;
+	}
+}
+
+void printer_test(void)
+{
+ 	char *str = "Hello, this is a test";
+	
+	print_str(str);
+	print_ch(0x0a);
 }

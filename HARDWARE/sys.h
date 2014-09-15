@@ -21,14 +21,26 @@
 //机器架构定义
 #define SMALL_MACHINE
 #if defined(SMALL_MACHINE)
-#define MAX_TUBES 4
+#define MAX_CHANNELS 2
 #else
-#define MAX_TUBES 10
+#define MAX_CHANNELS 10
 #endif
 
 #define MAX_MEASURE_TIMES 13
 
+/* 定时器中断中使用的回调函数
+* Return Value:
+	0 - Timer should stop
+	1 - Timer shouldn't stop
+*/
+typedef u8 (*TIMER_FN)(void);
 
+#define MOTOR0_DIR_UP 1
+#define MOTOR0_DIR_DOWN  0
+
+//系统当前状态
+#define SYS_INITING  1
+#define SYS_
 
 
 ///////////////////////////////////////////////////////////////

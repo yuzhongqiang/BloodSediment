@@ -23,7 +23,7 @@
 ### ADS-LD Output File: 'bloodsediment.axf'
 ### ADS-LD Command File: 'bloodsediment.lnp'
 ### Checking for dirty Components...
-### Creating CmdFile 'bloodsediment.lnp', Handle=0x00000344
+### Creating CmdFile 'bloodsediment.lnp', Handle=0x00000644
 ### Writing '.lnp' file
 ### ADS-LD Command file 'bloodsediment.lnp' is ready.
 ### ADS-LD: About to start ADS-LD Thread.

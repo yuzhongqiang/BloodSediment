@@ -11,23 +11,28 @@
 #include "comm.h"
 #include "rtc.h"	 
 
+/* Scanning ECR now */
+extern u8 g_is_scanning;
+
 int main(void)
 {			
 	/* Set vector table */
 
-
 	/* System clock initiliaing */
 	sys_init();
-	delay_init(72);	     //延时初始化 
-
-	/* keys initializing */
-	/////key_init();
-
+	delay_init(72);
+	
 	/* Real time init */
 	rtc_init();
+	rtc_set(1970,1,1,0,0,0);
 	
-	/* Blood sedimentation sensors initializing */
-	detector_init();
+	/* keys initializing
+	key_init();
+	*/
+	
+	channel_init();
+	motor_init();
+	
 	delay_ms(3000);
 	
 	/* LEDs initializing */
@@ -36,45 +41,25 @@ int main(void)
 	/* Printer initializing (UART3) */
 	printer_init(9600);
 
-	/* Card-reader initializing (UART2) */
-	/////reader_init(9600);
+	/* Card-reader initializing (UART2)
+	reader_init(9600);
+	*/
 
-	/* LCD initializing (UART1) */
-	/////lcd_init(9600);
+	/* LCD initializing (UART1)
+	lcd_init(9600);
+	*/
 
-	/* PC communication initializing (UART4) */
-	/////comm_init(9600);
-
-	//测试代码，主要是看系统配置是否正确
-	//led_run();
-
-//	start_detect();
-	//GPIOA->ODR &= 0xff8f;
-	//GPIOA->ODR |= (0x2 << 4); 
-	//GPIOA->ODR |= (0x1 << 4); 
-
-	while(1/*!detect_finished()*/)
+	/* PC communication initializing (UART4)
+	comm_init(9600);
+	*/
+	
+	while (1)
 	{
-		
-		//motor_drive(0,10);
-		//delay_ms(5000);
-		//print_str("abcdefghijklmnopqrstuvwxyz");
-		//start_chn0();
-		//delay_ms(1000); 
-		//start_chn1();
-		//delay_ms(1000);
-		//start_chn2();
-		//delay_ms(1000);
-		//start_chn3();
-		//delay_ms(1000);
-		//Moter_Drive(1,1500);
-		//delay_ms(500);
-		//do_detect();
-		//print_result();
-		//GPIOA->ODR &= 0xffef;
-		//delay_ms(1);
-		//GPIOA->ODR |= (0x1 << 4);
-		//delay_ms(1); 
+		channel_main();
+			
+		do_print();
+
+		delay_ms(500);
 	}	 
 }
 

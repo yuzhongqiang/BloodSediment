@@ -161,7 +161,7 @@ u8 rtc_set(u16 syear,u8 smon,u8 sday,u8 hour,u8 min,u8 sec)
 
 u32 rtc_get_sec(void)
 {
-	return RTC->CNTH;
+	return ((RTC->CNTH << 16) + RTC->CNTL);
 }
 
 //得到当前的时间
