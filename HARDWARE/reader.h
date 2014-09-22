@@ -6,13 +6,8 @@
 #define __READER_H
 
 void reader_init(u32);
-
-
-
-
-
-
-
+void reader_recv(void);
+void reader_handle(void);
 
 
 

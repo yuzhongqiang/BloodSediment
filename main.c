@@ -4,7 +4,8 @@
 #include "delay.h"	
 #include "led.h" 
 #include "key.h"
-#include "detector.h"	 	 
+#include "channel.h"
+#include "motor.h"	 	 
 #include "printer.h"	 
 #include "lcd.h"	 
 #include "reader.h"	 
@@ -57,7 +58,7 @@ int main(void)
 	{
 		channel_main();
 			
-		do_print();
+		printer_main();
 
 		delay_ms(500);
 	}	 
