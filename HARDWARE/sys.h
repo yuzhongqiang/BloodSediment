@@ -123,6 +123,13 @@ void jtag_set(u8 mode);
 
 #endif
 
+/****************************************************************
+                                          Console commands
+****************************************************************/
+#define CONSOLE_CMD_NONE      0
+#define CONSOLE_CMD_RUNNING   1
+#define CONSOLE_CMD_PAUSE     2
+#define CONSOLE_CMD_RESUME    3
 
 
 

@@ -37,7 +37,7 @@ static u8 _fn_motor0_reset_position(void);
 TIMER_FN g_timer_fn = NULL;
 /* 要求移动的步数*/
 static u32 g_demand_steps;   
-u8 g_scan_stage = SCAN_STAGE_INITED;
+u8 g_scan_stage = SCAN_STAGE_RESETED;
 
 u32 g_cur_trip0;
 u32 g_cur_trip1;

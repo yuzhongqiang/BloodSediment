@@ -12,13 +12,12 @@
 #include "comm.h"
 #include "rtc.h"	 
 
-/* Scanning ECR now */
-extern u8 g_is_scanning;
+/* Newest command recieved */
+static u8 g_cmd = CONSOLE_CMD_PAUSE;
 
 int main(void)
-{			
+{		
 	/* Set vector table */
-
 	/* System clock initiliaing */
 	sys_init();
 	delay_init(72);
@@ -46,9 +45,8 @@ int main(void)
 	reader_init(9600);
 	*/
 
-	/* LCD initializing (UART1)
-	lcd_init(9600);
-	*/
+	/* LCD initializing (UART1) */
+	console_init(9600);
 
 	/* PC communication initializing (UART4)
 	comm_init(9600);
@@ -56,11 +54,24 @@ int main(void)
 	
 	while (1)
 	{
-		channel_main();
-			
-		printer_main();
+		g_cmd = console_recv_cmd();
+		switch (g_cmd)
+		{
+		case CONSOLE_CMD_RUN:
+			channel_main();
+			break;
+		case CONSOLE_CMD_PAUSE:
+			channel_pause();
+			break;			
+		case CONSOLE_CMD_RESUME:
+			channel_resume();
+			break;
+		default:
+			break;
+		}
 
-		delay_ms(500);
+		printer_main();
+		delay_ms(200);
 	}	 
 }
 

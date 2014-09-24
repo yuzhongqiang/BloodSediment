@@ -23,7 +23,6 @@ struct tube {
   u32 values[MAX_MEASURE_TIMES];
 };
 
-#define SCAN_STAGE_INITED  0
 #define SCAN_STAGE_RESETING 1
 #define SCAN_STAGE_RESETED  2
 #define SCAN_STAGE_SCANNING 3
@@ -32,6 +31,9 @@ struct tube {
 u8 channel_is_opaque(u8 chn);
 void channel_init(void);
 void channel_main(void);
+void channel_pause(void);
+void channel_resume(void);
+
 
 #endif
 

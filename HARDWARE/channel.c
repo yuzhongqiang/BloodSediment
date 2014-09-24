@@ -12,7 +12,9 @@
 struct tube tubes[MAX_CHANNELS];
 u8 g_cur_chn = 0xff;   // 编号从0开始，当前正在检测的试管，0xff表示没有需要检查的试管
 extern u8 g_scan_stage;
-u8 g_need_reset;  // 一趟扫描结束，指示需要回复复位状态
+
+/* 暂停标志*/
+u8 g_pause = 0;
 
 /*
   MOTOR_ENx:  PA4	- 低电平有效
@@ -264,15 +266,14 @@ void channel_main()
 {
 	switch (g_scan_stage)
 	{
-	case SCAN_STAGE_INITED:
-		channel_scan_all();
-		channel_select_current();
-		g_scan_stage = SCAN_STAGE_RESETING;
-		motor_reset_position_blocked(0);
-		break;
 	case SCAN_STAGE_RESETING:
 		break;
 	case SCAN_STAGE_RESETED:
+		channel_scan_all();
+		channel_select_current();
+		if (1 == g_pause)
+			break;
+		
 		g_scan_stage = SCAN_STAGE_SCANNING;
 		motor_scan_chn(0, g_cur_chn);
 		break;
@@ -285,4 +286,15 @@ void channel_main()
 		break;
 	}		
 }
+
+inline void channel_pause(void)
+{
+	g_pause = 1;
+}
+
+inline void channel_resume(void)
+{
+	g_pause = 0;
+}
+
 

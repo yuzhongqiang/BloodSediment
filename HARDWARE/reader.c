@@ -23,7 +23,7 @@ void USART2_IRQHandler(void)
 	if (USART2->SR & (1<<5))//接收到数据
 	{	 
 		res = USART2->DR; 
-		rx_buf[g_rxcnt] = res;
+		g_rxbuf[g_rxcnt] = res;
 		g_rxcnt++;
 	}  											 
 }
