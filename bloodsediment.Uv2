@@ -13,15 +13,14 @@ File 3,1,<.\HARDWARE\delay.c><delay.c>
 File 3,1,<.\HARDWARE\key.c><key.c>
 File 3,1,<.\HARDWARE\led.c><led.c>
 File 3,1,<.\HARDWARE\sys.c><sys.c>
-File 3,1,<.\HARDWARE\usart.c><usart.c>
 File 3,1,<.\HARDWARE\comm.c><comm.c>
-File 3,1,<.\HARDWARE\lcd.c><lcd.c>
 File 3,1,<.\HARDWARE\printer.c><printer.c>
 File 3,1,<.\HARDWARE\reader.c><reader.c>
 File 3,1,<.\HARDWARE\storage.c><storage.c>
 File 3,1,<.\HARDWARE\rtc.c><rtc.c>
 File 3,1,<.\HARDWARE\channel.c><channel.c>
 File 3,1,<.\HARDWARE\motor.c><motor.c>
+File 3,1,<.\HARDWARE\console.c><console.c>
 
 
 Options 1,0,0  // Target 'Target 1'

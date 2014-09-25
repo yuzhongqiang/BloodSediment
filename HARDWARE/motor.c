@@ -10,19 +10,17 @@
 #include "delay.h"
 #include "rtc.h"
 
-static void _timer_init(u16 freq_div, u16 arr);
-static void _motor_startup(u8 motor_id);
-static void _motor_stop(u8 motor_id);
-static u8 _motor0_is_reset(void);
-static u8 _motor1_is_reset(void);
-static u8 _motor2_is_reset(void);
-static void _motor_set_dir(u8 dir);
-static u8 _fn_motor_move_steps(void);
-static u8 _fn_motor0_scan_chn(void);
-static u8 _fn_motor0_reset_position_blocked(void);
-#if 0
-static u8 _fn_motor0_reset_position(void);
-#endif
+void _timer_init(u16 freq_div, u16 arr);
+void _motor_startup(u8 motor_id);
+void _motor_stop(u8 motor_id);
+u8 _motor0_is_reset(void);
+u8 _motor1_is_reset(void);
+u8 _motor2_is_reset(void);
+void _motor_set_dir(u8 dir);
+u8 _fn_motor_move_steps(void);
+u8 _fn_motor0_scan_chn(void);
+u8 _fn_motor0_reset_position_blocked(void);
+u8 _fn_motor0_reset_position(void);
 
 /*
   MOTOR_ENx:  PA4	- 低电平有效
@@ -72,7 +70,7 @@ clear:
 	定时器的计数频率 = 72,000,000/freq_div
 	计数值 = count
 */
-static void _timer_init(u16 freq_div, u16 arr)
+void _timer_init(u16 freq_div, u16 arr)
 {
 	/*
 	通用定时器3初始化，时钟选择为APB2(72MHz)
@@ -87,17 +85,17 @@ static void _timer_init(u16 freq_div, u16 arr)
   	nvic_init(1,3, TIM3_IRQChannel,2);//抢占1，子优先级3，组2
 }
 
-static void _motor_startup(u8 motor_id)
+void _motor_startup(u8 motor_id)
 {	
-	GPIOC->ODR |= (1 << motor_id);
+	GPIOC->ODR |= (1 << motor_id);  /* MT_x */
 	delay_ms(1);
 
 	TIM3->DIER |= (1 << 0);   	//允许更新中断		
-	GPIOA->ODR &= 0xffBf;     //ENx置低，关闭电机
+	GPIOA->ODR &= 0xffBf;     //ENx置低，打开电机
 	TIM3->CR1 |= 0x01;      	//使能定时器3
 }
 
-static void _motor_stop(u8 motor_id)
+void _motor_stop(u8 motor_id)
 {
 	GPIOC->ODR &= (~(1 << motor_id));
 	delay_ms(1);
@@ -107,25 +105,26 @@ static void _motor_stop(u8 motor_id)
  	GPIOA->ODR |= 0x0040;	//ENx置高，关闭电机
 }
 
-
 /* 返回值：
 	1 - 电机运行到最下方
 	0 - 电机没有运行到最下方
 */
-static u8 _motor0_is_reset(void)
+u8 _motor0_is_reset(void)
 {
-	u16 pcv = GPIOC->IDR;
-  	return (pcv & 0x0080) ? 1 : 0;
+	/* A_INIT: PB5 */
+	u16 pcv = GPIOB->IDR;
+  	return (pcv & 0x0020) ? 1 : 0;
 }
 
 /* 返回值：
 	1 - 电机运行到最下方
 	0 - 电机没有运行到最下方
 */
-static u8 _motor1_is_reset(void)
+u8 _motor1_is_reset(void)
 {
-	u16 pcv = GPIOC->IDR;
-  	return (pcv & 0x0080) ? 1 : 0;
+	/* B_INIT: PB8 */
+	u16 pcv = GPIOB->IDR;
+  	return (pcv & 0x0100) ? 1 : 0;
 }
 
 /* 返回值：
@@ -134,15 +133,16 @@ static u8 _motor1_is_reset(void)
 */
 static u8 _motor2_is_reset(void)
 {
-	u16 pcv = GPIOC->IDR;
-  	return (pcv & 0x0080) ? 1 : 0;
+	/* C_INIT: PB9 */
+	u16 pcv = GPIOB->IDR;
+  	return (pcv & 0x0200) ? 1 : 0;
 }
 
  /* 设置电机方向
     0 - 向下
 	1 - 向上
 */
-static void _motor_set_dir(u8 dir)
+void _motor_set_dir(u8 dir)
 {
 	if (!dir)
 		GPIOA->ODR |= 0x0020;
@@ -154,7 +154,7 @@ static void _motor_set_dir(u8 dir)
 					Motor move specific step routines
 **************************************************************/
 
-static u8 _fn_motor_move_steps(void)
+u8 _fn_motor_move_steps(void)
 {
 	u16 temp;
 
@@ -202,21 +202,51 @@ static u8 _fn_motor0_reset_position_blocked(void)
 		return 1;
 }
 
+static u8 _fn_motor1_reset_position_blocked(void)
+{
+	if (_motor1_is_reset())
+		return 0;
+	else
+		return 1;
+}
+
+static u8 _fn_motor2_reset_position_blocked(void)
+{
+	if (_motor2_is_reset())
+		return 0;
+	else
+		return 1;
+}
+
 void motor_reset_position_blocked(u8 motor_id)
 {
 	switch (motor_id)
 	{
 	case 0:
 		if (_motor0_is_reset())
-			motor_move_steps_blocked(0, MOTOR0_DIR_UP, 200);
+			motor_move_steps_blocked(motor_id, MOTOR0_DIR_UP, 200);
 		
 		g_timer_fn = _fn_motor0_reset_position_blocked;
 		_motor_set_dir(MOTOR0_DIR_DOWN);
 		_motor_startup(motor_id);			
 		break;
 	case 1:
+		if (_motor1_is_reset())
+			motor_move_steps_blocked(motor_id, MOTOR0_DIR_FWD, 200);
+		
+		g_timer_fn = _fn_motor1_reset_position_blocked;
+		_motor_set_dir(MOTOR0_DIR_BWD);
+		_motor_startup(motor_id);	
 		break;
 	case 2:
+#if 1
+		if (_motor2_is_reset())
+			motor_move_steps_blocked(motor_id, MOTOR0_DIR_UP, 200);
+		
+		g_timer_fn = _fn_motor2_reset_position_blocked;
+		_motor_set_dir(MOTOR0_DIR_PUSH);
+		_motor_startup(motor_id);	
+#endif
 		break;
 	default:
 		break;
@@ -311,17 +341,24 @@ void motor_init(void)
 	_timer_init(7200, 1);
 	delay_ms(10);
 	
-	/* ENx(PA6), DIRx(PA5), CLKx(PA4)，输出模式 */
+	/*
+	ENx(PA6), DIRx(PA5), CLKx(PA4)，输出模式 
+	初始时输出高电平，Enx low active 
+	*/
 	GPIOA->CRL &= 0xF000FFFF;
 	GPIOA->CRL |= 0x03330000;
-
-	/* 初始时输出高电平，Enx low active */
 	GPIOA->ODR |= 0x0040;
 
 	/* MT_1(PC0), MT_2(PC1), MT_3(PC2) initialization, disable */
 	GPIOC->CRL &= 0xFFFFF000;
 	GPIOC->CRL |= 0x00000333;
 	GPIOC->ODR &= 0xfff8;	
+
+	/* 配置A_INIT(PB5), B_INIT(PB8), C_INIT(PB9)为上拉/下拉输入模式 */
+	GPIOB->CRL &= 0xFF0FFFFF;
+	GPIOB->CRL |= 0x00800000;
+	GPIOB->CRH &= 0xFFFFFFFF;
+	GPIOB->CRH |= 0x00000088;
 									
 	// 电机回复到起始位置
 	motor_reset_position_blocked(0);

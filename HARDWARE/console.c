@@ -7,7 +7,7 @@
 
 #include <stm32f10x_lib.h>
 #include "sys.h"
-#include "lcd.h"
+#include "console.h"
 
 /* Console command format 
 Total length:8bytes
@@ -31,19 +31,19 @@ This is the run command in page 1
 /* 串口2中断服务程序
    注意,读取USARTx->SR能避免莫名其妙的错误
 */   	
-static u8 g_rxbuf[64];
-static u8 g_rxcnt = 0;
+u8 g_console_rxbuf[64];
+u8 g_console_rxcnt = 0;
 
 //接收状态
 #define _STATE_RECIEVING  0
 #define _STATE_0XD_RECVED  1
-static u8 g_rxstat = _STATE_RECIEVING;
+u8 g_console_rxstat = _STATE_RECIEVING;
 
 /* 当前接收到的命令*/
-static u8 g_curcmd = CONSOLE_CMD_NONE;
+u8 g_console_curcmd = CONSOLE_CMD_NONE;
 static u8 _console_parse(void)
 {
-
+	return 0;
 }
   
 void USART1_IRQHandler(void)
@@ -54,25 +54,25 @@ void USART1_IRQHandler(void)
 	if (USART1->SR & (1<<5))		//接收到数据
 	{	 
 		res = USART1->DR; 
-		switch (g_rxstat)
+		switch (g_console_rxstat)
 		{
 		case _STATE_RECIEVING:
 			if (0x0d == res)
-				g_rxstat = _STATE_0XD_RECVED;
+				g_console_rxstat = _STATE_0XD_RECVED;
 			else
-				g_rxbuf[g_rxcnt++] = res;			
+				g_console_rxbuf[g_console_rxcnt++] = res;			
 			break;
 		case _STATE_0XD_RECVED:
 			if (res != 0x0A)
 			{
-				g_rxcnt = 0;
-				g_rxstat = _STATE_RECIEVING;
+				g_console_rxcnt = 0;
+				g_console_rxstat = _STATE_RECIEVING;
 			}
 			else
 			{
 				_console_parse();
-				g_rxcnt = 0;
-				g_rxstat = _STATE_RECIVED_FINISH;
+				g_console_rxcnt = 0;
+				g_console_rxstat = _STATE_RECIEVING;
 			}
 			break;
 		}
@@ -115,6 +115,6 @@ void console_init(u32 baud)
 
 u8 console_recv_cmd(void)
 {
-
+	return 0;
 }
 

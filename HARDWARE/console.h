@@ -7,7 +7,7 @@
 
 void console_init(u32);
 
-
+u8 console_recv_cmd(void);
 
 
 

@@ -125,14 +125,26 @@ static void _channel_config(void)
 	GPIOB->ODR |= 0x3;
 	GPIOC->ODR |= (0x3 << 4);
 									
-	/* 配置BLOIOD_VALUEx为上拉/下拉输入模式 */
+	/* 配置BLOIOD_VALUEx为上拉/下拉输入模式
+	  OUT1 - PB12
+	  OUT2 - PB13
+	  OUT3 - PB14
+	  OUT4 - PB15
+	  OUT5 - PC6
+	  OUT6 - PC7
+	  OUT7 - PC8
+	  OUT8 - PC9
+	  OUT9 - PA8
+	  OUT10 - PA11
+	*/
+	
 	GPIOA->CRH &= 0xFFFF0FF0;
 	GPIOA->CRH |= 0x00008008;
 	GPIOB->CRH &= 0x0000FFFF;
 	GPIOB->CRH |= 0x88880000;
 	
-	GPIOC->CRL &= 0x00FFF000;
-	GPIOC->CRL |= 0x88000333;
+	GPIOC->CRL &= 0x00FFFFFF;
+	GPIOC->CRL |= 0x88000000;
 	GPIOC->CRH &= 0xFFFFFF00;
 	GPIOC->CRH |= 0x00000088;
 }
@@ -287,12 +299,12 @@ void channel_main()
 	}		
 }
 
-inline void channel_pause(void)
+void channel_pause(void)
 {
 	g_pause = 1;
 }
 
-inline void channel_resume(void)
+void channel_resume(void)
 {
 	g_pause = 0;
 }

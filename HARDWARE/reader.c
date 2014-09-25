@@ -8,14 +8,15 @@
 #include <stm32f10x_lib.h>
 #include "sys.h"
 #include "reader.h"
+#include "delay.h"
 
 /* IC Reader uses USART2 */
 
 /* ´®¿Ú2ÖÐ¶Ï·þÎñ³ÌÐò
    ×¢Òâ,¶ÁÈ¡USARTx->SRÄÜ±ÜÃâÄªÃûÆäÃîµÄ´íÎó
 */   	
-static u8 g_rxbuf[64];     //½ÓÊÕ»º³å,×î´ó64¸ö×Ö½Ú.
-static u8 g_rxcnt;
+u8 g_reader_rxbuf[64];     //½ÓÊÕ»º³å,×î´ó64¸ö×Ö½Ú.
+u8 g_reader_rxcnt = 0;
   
 void USART2_IRQHandler(void)
 {
@@ -23,8 +24,8 @@ void USART2_IRQHandler(void)
 	if (USART2->SR & (1<<5))//½ÓÊÕµ½Êý¾Ý
 	{	 
 		res = USART2->DR; 
-		g_rxbuf[g_rxcnt] = res;
-		g_rxcnt++;
+		g_reader_rxbuf[g_reader_rxcnt] = res;
+		g_reader_rxcnt++;
 	}  											 
 }
 
@@ -94,7 +95,8 @@ static u8 reader_checksum(u8* data, u8 offset, u8 len)
 
 static void _adjust_buf(u8 *sbuf, u8 slen, u8 *dbuf, u8 *dlen)
 {
-	u8 i = j = 0;
+	u8 i = 0;
+	u8 j = 0;
 
 	for (i=0; i<slen; i++)
 	{
@@ -145,7 +147,7 @@ void reader_store_value(u16 value)
 	u8 buf[32];
 	u8 i;
 	
-	u8 tmp_buf[15] = {0x7f, 0x0d/*0x0e?*/, 0x12, 0x04, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, , , , , };
+	u8 tmp_buf[15] = {0x7f, 0x0d/*0x0e?*/, 0x12, 0x04, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,};
 	*((u32*)(tmp_buf+10)) = value;
 	checksum = reader_checksum(tmp_buf, 2, 12/*13?*/);
 	tmp_buf[14] = checksum;
@@ -187,21 +189,21 @@ void reader_load_value(void)
 
 void reader_recv(void)
 {
-	g_rxcnt = 0;
+	g_reader_rxcnt = 0;
 	USART2->CR1 |= (1 << 8);    //PEÖÐ¶ÏÊ¹ÄÜ
 	USART2->CR1 |= (1 << 5);    //½ÓÊÕ»º³åÇø·Ç¿ÕÖÐ¶ÏÊ¹ÄÜ	
 	delay_ms(3000);
 	USART2->CR1 &= (~(1 << 8));    //PEÖÐ¶ÏÊ¹ÄÜ
 	USART2->CR1 &= (~(1 << 5));    //½ÓÊÕ»º³åÇø·Ç¿ÕÖÐ¶ÏÊ¹Ä
 
-	reader_handle();
+	//reader_handle();
 }
 
 void reader_send_cmd(u8 *cmd, u8 len)
 {
 	u8 i;
 	for (i=0; i<len; i++)
-		_send_byte(cmd[i])
+		_send_byte(cmd[i]);
 }
 
 
