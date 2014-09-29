@@ -239,14 +239,12 @@ void motor_reset_position_blocked(u8 motor_id)
 		_motor_startup(motor_id);	
 		break;
 	case 2:
-#if 1
 		if (_motor2_is_reset())
 			motor_move_steps_blocked(motor_id, MOTOR0_DIR_UP, 200);
 		
 		g_timer_fn = _fn_motor2_reset_position_blocked;
 		_motor_set_dir(MOTOR0_DIR_PUSH);
 		_motor_startup(motor_id);	
-#endif
 		break;
 	default:
 		break;
@@ -338,7 +336,7 @@ void motor_scan_chn(u8 motor_id, u8 chn_id)
 */
 void motor_init(void)
 {
-	_timer_init(7200, 1);
+	_timer_init(7200, 7);
 	delay_ms(10);
 	
 	/*
@@ -357,12 +355,12 @@ void motor_init(void)
 	/* 配置A_INIT(PB5), B_INIT(PB8), C_INIT(PB9)为上拉/下拉输入模式 */
 	GPIOB->CRL &= 0xFF0FFFFF;
 	GPIOB->CRL |= 0x00800000;
-	GPIOB->CRH &= 0xFFFFFFFF;
+	GPIOB->CRH &= 0xFFFFFF00;
 	GPIOB->CRH |= 0x00000088;
 									
 	// 电机回复到起始位置
-	motor_reset_position_blocked(0);
-	//motor_reset_position(1);
-	//motor_reset_position(2);
+	//motor_reset_position_blocked(0);
+	//motor_reset_position_blocked(1);
+	motor_reset_position_blocked(2);
 }
 

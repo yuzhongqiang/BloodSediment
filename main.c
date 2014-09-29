@@ -71,8 +71,8 @@ int main(void)
 			break;
 		}
 #endif
-		channel_main();
-		printer_main();
+		//channel_main();
+		//printer_main();
 		delay_ms(200);
 	}	 
 }
