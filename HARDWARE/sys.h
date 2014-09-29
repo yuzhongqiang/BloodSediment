@@ -21,7 +21,7 @@
 //机器架构定义
 #define SMALL_MACHINE
 #if defined(SMALL_MACHINE)
-#define MAX_CHANNELS 2
+#define MAX_CHANNELS 4
 #else
 #define MAX_CHANNELS 10
 #endif
