@@ -11,6 +11,7 @@
 
 struct tube tubes[MAX_CHANNELS];
 u8 g_cur_chn = 0xff;   // 编号从0开始，当前正在检测的试管，0xff表示没有需要检查的试管
+u8 g_prev_chn = 0xff;
 extern u8 g_scan_stage;
 
 /* 暂停标志*/
@@ -41,7 +42,7 @@ void channel_close(void);
 void channel_open(u8 chn);
 u8 channel_is_opaque(u8 chn);
 void _channel_config(void);
-void channel_scan_all(void);
+void channel_check_all(void);
 void channel_select_current(void);
 
 static void channel_close(void)
@@ -149,7 +150,7 @@ static void _channel_config(void)
 	GPIOC->CRH |= 0x00000088;
 }
  
-static void channel_scan_all(void)
+static void channel_check_all(void)
 {
     u8 i, j;
     
@@ -167,32 +168,42 @@ static void channel_scan_all(void)
 		case 1:
 			tubes[i].inplace = !BLOOD_VALUE1;
 			break;
-#ifndef SMALL_MACHINE   //For Test
 		case 2:
 			tubes[i].inplace = !BLOOD_VALUE2;
 			break;
 		case 3:
 			tubes[i].inplace = !BLOOD_VALUE3;
 			break;
-//#ifndef SMALL_MACHINE
+#ifndef SMALL_MACHINE
 	  	case 4:
+			tubes[i].inplace = !BLOOD_VALUE4;
+			break;
 		case 5:
+			tubes[i].inplace = !BLOOD_VALUE5;
+			break;
 		case 6:
+			tubes[i].inplace = !BLOOD_VALUE6;
+			break;
 		case 7:
+			tubes[i].inplace = !BLOOD_VALUE7;
+			break;
 		case 8:
+			tubes[i].inplace = !BLOOD_VALUE8;
+			break;
 		case 9:
+			tubes[i].inplace = !BLOOD_VALUE9;
 			break;
 #endif
 		}			
 		channel_close();
         
-            if (tubes[i].inplace)
-            {
-                tubes[i].status = CHN_STATUS_WAITING;
+        if (tubes[i].inplace)
+        {
+            tubes[i].status = CHN_STATUS_WAITING;
 			tubes[i].insert_time = rtc_get_sec();
-            }
+        }
 		else
-                tubes[i].status = CHN_STATUS_NONE;
+            tubes[i].status = CHN_STATUS_NONE;
             
 		tubes[i].remains = MAX_MEASURE_TIMES;
 		for	(j=0; j<MAX_MEASURE_TIMES; j++)
@@ -214,6 +225,7 @@ static void channel_select_current(void)
 			if (((tubes[i].remains != 0) && (rtc_get_sec()-tubes[i].last_scan_time > MOTOR0_INTERVAL_TIME)) ||
 				(tubes[i].remains == 13))
 			{
+				g_prev_chn = g_cur_chn;
 				g_cur_chn = i;
 				return;
 			}
@@ -239,20 +251,30 @@ void channel_init(void)
 		case 1:
 			tubes[i].inplace = !BLOOD_VALUE1;
 			break;
-#ifndef SMALL_MACHINE
 		case 2:
 			tubes[i].inplace = !BLOOD_VALUE2;
 			break;
 		case 3:
 			tubes[i].inplace = !BLOOD_VALUE3;
 			break;
-
+#ifndef SMALL_MACHINE
 	  	case 4:
+			tubes[i].inplace = !BLOOD_VALUE4;
+			break;
 		case 5:
+			tubes[i].inplace = !BLOOD_VALUE5;
+			break;
 		case 6:
+			tubes[i].inplace = !BLOOD_VALUE6;
+			break;
 		case 7:
+			tubes[i].inplace = !BLOOD_VALUE7;
+			break;
 		case 8:	
+			tubes[i].inplace = !BLOOD_VALUE8;
+			break;
 		case 9:
+			tubes[i].inplace = !BLOOD_VALUE9;
 			break;
 #endif
 		}
@@ -281,7 +303,7 @@ void channel_main()
 	case SCAN_STAGE_RESETING:
 		break;
 	case SCAN_STAGE_RESETED:
-		channel_scan_all();
+		channel_check_all();
 		channel_select_current();
 		if (1 == g_pause)
 			break;

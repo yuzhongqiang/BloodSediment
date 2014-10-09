@@ -41,6 +41,9 @@ u32 g_cur_trip0;
 u32 g_cur_trip1;
 u32 g_cur_trip2;
 
+/* motor1's docking place (from reset position) */
+u32 g_docking[10] = {4000, 6000, 8000, 10000, 12000,
+					 14000,16000,18000,20000, 22000};
 
 //定时器3中断服务程序	 
 void TIM3_IRQHandler(void)
@@ -346,6 +349,7 @@ void motor_reset_position(u8 motor_id)
 
 extern struct tube tubes[MAX_CHANNELS];
 extern u8 g_cur_chn;
+extern u8 g_prev_chn;
 extern u8 channel_is_opaque(u8 chn);
 
 static u8 _fn_motor0_scan_chn(void)
@@ -376,10 +380,43 @@ should_stop:
 
 void motor_scan_chn(u8 motor_id, u8 chn_id)
 {
+	u8 dir;
+	u32 steps;
+	
 	g_scan_stage = SCAN_STAGE_SCANNING;
 	g_timer_fn = _fn_motor0_scan_chn;
 	tubes[chn_id].scan_times[13 - tubes[chn_id].remains] = rtc_get_sec();
-	
+
+	/* motor1 reach to place */
+	if (g_prev_chn == 0xff)
+	{
+		steps = g_docking[g_cur_chn];
+		dir = MOTOR0_DIR_FWD;
+	}
+	else if (g_docking[g_cur_chn] > g_docking[g_prev_chn])
+	{
+		steps = g_docking[g_cur_chn] - g_docking[g_prev_chn];
+		dir = MOTOR0_DIR_FWD;
+	}
+	else
+	{
+		steps = g_docking[g_prev_chn] - g_docking[g_cur_chn];
+		dir = MOTOR0_DIR_BWD;
+	}
+	motor_move_steps(1, dir, steps);
+
+	/* do shaking when scan the first time */
+	if (tubes[g_cur_chn].remains == MAX_MEASURE_TIMES)
+	{
+		motor_move_steps(2, 0, 500);
+		motor_move_steps(2, 1, 500);
+		motor_move_steps(2, 0, 500);
+		motor_move_steps(2, 1, 500);
+		motor_move_steps(2, 0, 500);
+		motor_move_steps(2, 1, 500);
+	}
+
+	/* start schan ... */
 	_motor_set_dir(MOTOR0_DIR_UP);
 	_motor_startup(motor_id);	
 }
