@@ -52,8 +52,8 @@ void reader_init(u32 baud)
 	USART2->CR1 |= 0X200C;  //1位停止,无校验位.
 
 	//使能接收中断
-	//USART2->CR1 |= (1 << 8);    //PE中断使能
-	//USART2->CR1 |= (1 << 5);    //接收缓冲区非空中断使能	    	
+	USART2->CR1 |= (1 << 8);    //PE中断使能
+	USART2->CR1 |= (1 << 5);    //接收缓冲区非空中断使能	    	
 	nvic_init(3, 3, USART2_IRQChannel, 2);//组2，最低优先级 
 }
 
@@ -203,7 +203,10 @@ void reader_send_cmd(u8 *cmd, u8 len)
 {
 	u8 i;
 	for (i=0; i<len; i++)
+	{
 		_send_byte(cmd[i]);
+		delay_ms(1);
+	}
 }
 
 

@@ -39,8 +39,8 @@ typedef u8 (*TIMER_FN)(void);
 #define MOTOR0_DIR_UP 1
 #define MOTOR0_DIR_DOWN  0
 /* MOTOR 1 */
-#define MOTOR0_DIR_FWD 0
-#define MOTOR0_DIR_BWD  1
+#define MOTOR0_DIR_FWD 1
+#define MOTOR0_DIR_BWD  0
 /* MOTOR 2 */
 #define MOTOR0_DIR_PUSH 1
 #define MOTOR0_DIR_RELEASE  0

@@ -194,6 +194,53 @@ static u8 _fn_motor0_reset_position_blocked(void)
 {
 	if (_motor0_is_reset())
 	{
+		g_demand_steps = 0;
+		g_cur_trip0 = 0;
+		g_scan_stage = SCAN_STAGE_RESETED;
+		return 0;
+	}
+	else
+	{
+		g_demand_steps = 1;
+		return 1;
+	}
+}
+
+static u8 _fn_motor1_reset_position_blocked(void)
+{
+	if (_motor1_is_reset())
+	{
+		g_demand_steps = 0;
+		return 0;
+	}
+	else
+	{
+		g_demand_steps = 1;
+		return 1;
+	}
+}
+
+static u8 _fn_motor2_reset_position_blocked(void)
+{
+	if (_motor2_is_reset())
+	{
+		g_demand_steps = 0;
+		return 0;
+	}
+	else
+	{
+		g_demand_steps = 1;
+		return 1;
+	}
+}
+
+/**************************************************************
+			  Motor reset routines (non blocked)
+**************************************************************/
+static u8 _fn_motor0_reset_position(void)
+{
+	if (_motor0_is_reset())
+	{
 		g_cur_trip0 = 0;
 		g_scan_stage = SCAN_STAGE_RESETED;
 		return 0;
@@ -202,7 +249,7 @@ static u8 _fn_motor0_reset_position_blocked(void)
 		return 1;
 }
 
-static u8 _fn_motor1_reset_position_blocked(void)
+static u8 _fn_motor1_reset_position(void)
 {
 	if (_motor1_is_reset())
 		return 0;
@@ -210,7 +257,7 @@ static u8 _fn_motor1_reset_position_blocked(void)
 		return 1;
 }
 
-static u8 _fn_motor2_reset_position_blocked(void)
+static u8 _fn_motor2_reset_position(void)
 {
 	if (_motor2_is_reset())
 		return 0;
@@ -225,7 +272,8 @@ void motor_reset_position_blocked(u8 motor_id)
 	case 0:
 		if (_motor0_is_reset())
 			motor_move_steps_blocked(motor_id, MOTOR0_DIR_UP, 200);
-		
+
+		g_demand_steps = 1;
 		g_timer_fn = _fn_motor0_reset_position_blocked;
 		_motor_set_dir(MOTOR0_DIR_DOWN);
 		_motor_startup(motor_id);			
@@ -233,22 +281,28 @@ void motor_reset_position_blocked(u8 motor_id)
 	case 1:
 		if (_motor1_is_reset())
 			motor_move_steps_blocked(motor_id, MOTOR0_DIR_FWD, 200);
-		
+
+		g_demand_steps = 1;
 		g_timer_fn = _fn_motor1_reset_position_blocked;
 		_motor_set_dir(MOTOR0_DIR_BWD);
 		_motor_startup(motor_id);	
 		break;
 	case 2:
 		if (_motor2_is_reset())
-			motor_move_steps_blocked(motor_id, MOTOR0_DIR_UP, 200);
-		
+			motor_move_steps_blocked(motor_id, MOTOR0_DIR_PUSH, 10);
+
+		g_demand_steps = 1;
 		g_timer_fn = _fn_motor2_reset_position_blocked;
-		_motor_set_dir(MOTOR0_DIR_PUSH);
+		_motor_set_dir(MOTOR0_DIR_RELEASE);
 		_motor_startup(motor_id);	
 		break;
 	default:
 		break;
 	}
+
+	/* blocking ... */
+	while (g_demand_steps > 0)
+		;
 }
 
 #if 0
@@ -336,7 +390,7 @@ void motor_scan_chn(u8 motor_id, u8 chn_id)
 */
 void motor_init(void)
 {
-	_timer_init(7200, 7);
+	_timer_init(7200, 10);
 	delay_ms(10);
 	
 	/*
@@ -360,7 +414,7 @@ void motor_init(void)
 									
 	// 电机回复到起始位置
 	//motor_reset_position_blocked(0);
-	//motor_reset_position_blocked(1);
-	motor_reset_position_blocked(2);
+	motor_reset_position_blocked(1);
+	//motor_reset_position_blocked(2);
 }
 

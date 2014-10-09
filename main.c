@@ -30,10 +30,10 @@ int main(void)
 	key_init();
 	*/
 	
-	channel_init();
-	motor_init();
+	//channel_init();
+	//motor_init();
 	
-	delay_ms(3000);
+	delay_ms(500);
 	
 	/* LEDs initializing */
 	//led_init();
@@ -41,12 +41,11 @@ int main(void)
 	/* Printer initializing (UART3) */
 	//printer_init(9600);
 
-	/* Card-reader initializing (UART2)
+	/* Card-reader initializing (UART2) */
 	reader_init(9600);
-	*/
 
 	/* LCD initializing (UART1) */
-	//console_init(9600);
+	console_init(9600);
 
 	/* PC communication initializing (UART4)
 	comm_init(9600);
