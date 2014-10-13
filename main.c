@@ -13,7 +13,7 @@
 #include "rtc.h"	 
 
 /* Newest command recieved */
-//u8 g_main_cmd = CONSOLE_CMD_PAUSE;
+u8 g_cmd = CONSOLE_STAT_INIT;
 
 int main(void)
 {		
@@ -30,8 +30,8 @@ int main(void)
 	key_init();
 	*/
 	
-	//channel_init();
-	//motor_init();
+	channel_init();
+	motor_init();
 	
 	delay_ms(500);
 	
@@ -42,7 +42,7 @@ int main(void)
 	//printer_init(9600);
 
 	/* Card-reader initializing (UART2) */
-	reader_init(9600);
+	//reader_init(9600);
 
 	/* LCD initializing (UART1) */
 	console_init(9600);
@@ -53,24 +53,21 @@ int main(void)
 	
 	while (1)
 	{
-#if 0
-		g_main_cmd = console_recv_cmd();
+#if 1
+		g_cmd = console_recv_cmd();
 		switch (g_cmd)
 		{
-		case CONSOLE_CMD_RUNNING:
-			channel_main();
+		case CONSOLE_STAT_RUNNING:
+		    channel_main();
 			break;
-		case CONSOLE_CMD_PAUSE:
+		case CONSOLE_STAT_PAUSE:
 			channel_pause();
 			break;			
-		case CONSOLE_CMD_RESUME:
-			channel_resume();
-			break;
 		default:
 			break;
 		}
 #endif
-		//channel_main();
+
 		//printer_main();
 		delay_ms(200);
 	}	 

@@ -8,6 +8,7 @@
 #include <stm32f10x_lib.h>
 #include "sys.h"
 #include "console.h"
+#include "channel.h"
 
 /* Console command format 
 Total length:8bytes
@@ -17,7 +18,7 @@ Tail(2bytes): 0x0d, 0x0a
 Page 1:
 	cmd1: run
 	cmd2: pause
-	cmd3: configure
+	cmd3: status
 Page 2:
 	cmd1: query
 	cmd2: buy
@@ -40,9 +41,36 @@ u8 g_console_rxcnt = 0;
 u8 g_console_rxstat = _STATE_RECIEVING;
 
 /* 当前接收到的命令*/
-u8 g_console_curcmd = CONSOLE_CMD_NONE;
-static u8 _console_parse(void)
+u8 g_console_curstat = CONSOLE_STAT_INIT;
+
+u8 _console_parse(void)
 {
+	switch (g_console_rxbuf[2])
+	{
+	case 0:
+		break;
+	case 1:   //main page
+		if (0x01 == g_console_rxbuf[3])
+		{
+			channel_resume();
+			g_console_curstat= CONSOLE_STAT_RUNNING;
+		}
+		else if (0x02 == g_console_rxbuf[3])
+		{
+			channel_pause();
+			g_console_curstat = CONSOLE_STAT_PAUSE;
+		}
+		else if (0x03 == g_console_rxbuf[3])
+		{
+			channel_pause();
+			g_console_curstat = CONSOLE_STAT_MNG;
+		}
+		break;
+	case 2:  // manage page
+		break;
+	default:
+		break;
+	}
 	return 0;
 }
   
@@ -53,24 +81,32 @@ void USART1_IRQHandler(void)
 	
 	if (USART1->SR & (1<<5))		//接收到数据
 	{	 
-		res = USART1->DR; 
+    		res = USART1->DR; 
 		switch (g_console_rxstat)
 		{
 		case _STATE_RECIEVING:
 			if (0x0d == res)
+			{
+				g_console_rxbuf[g_console_rxcnt++] = res;
 				g_console_rxstat = _STATE_0XD_RECVED;
+			}
 			else
 				g_console_rxbuf[g_console_rxcnt++] = res;			
 			break;
 		case _STATE_0XD_RECVED:
-			if (res != 0x0A)
+			if (res != 0x0A)     //error, restart
 			{
 				g_console_rxcnt = 0;
 				g_console_rxstat = _STATE_RECIEVING;
 			}
 			else
 			{
-				_console_parse();
+			   g_console_rxbuf[g_console_rxcnt++] = res;
+			   if (g_console_rxbuf[0] == 0xf3 && g_console_rxbuf[1] == 0xd7
+			   	&& g_console_rxcnt == 8)
+			   {
+				_console_parse();	
+			   }
 				g_console_rxcnt = 0;
 				g_console_rxstat = _STATE_RECIEVING;
 			}
@@ -115,6 +151,6 @@ void console_init(u32 baud)
 
 u8 console_recv_cmd(void)
 {
-	return 0;
+	return g_console_curstat;
 }
 

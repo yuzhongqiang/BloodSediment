@@ -53,34 +53,50 @@ static void channel_close(void)
 }
 
 static void channel_open(u8 chn)
-{
+{		
+	GPIOB->ODR &= 0xfffc;
+	GPIOC->ODR &= 0xffcf;
+
+	/*
+	bit3(IND)  bit2(INC)  bit1(INA)  bit0(INB)
+	PB1         PB0         PC4         PC5
+	*/
 	switch (chn)
 	{
 	 case 0:
-		GPIOB->ODR &= 0xfffc;
-		GPIOC->ODR &= 0xffcf;
+		break;        
+	 case 1:       //b0001
+		GPIOC->ODR |= (0x2 << 4);  
 		break;
-	 case 1:
-		GPIOB->ODR &= 0xfffc;
-		GPIOC->ODR &= 0xffcf;
-		GPIOC->ODR |= (0x2 << 4);
-		break;
-	 case 2:
-		GPIOB->ODR &= 0xfffc;
-		GPIOC->ODR &= 0xffcf;
+	 case 2:      //b0010
 		GPIOC->ODR |= (0x1 << 4);
 		break;
-	 case 3:
-		GPIOB->ODR &= 0xfffc;
-		GPIOC->ODR &= 0xffcf;
+	 case 3:      //b0011
 		GPIOC->ODR |= (0x3 << 4);
 		break;
 #if !defined(SMALL_MACHINE)
-	case 4:
-		GPIOB->ODR &= 0xfffc;
-		GPIOC->ODR &= 0xffcf;
-		GPIOB->ODR |= 0x3;
+	case 4:      //b0100
+		GPIOB->ODR |= 0x1;
+		break;
+	case 5:      //b0101
+		GPIOB->ODR |= 0x1;
+		GPIOC->ODR |= (0x2 << 4);
+		break;
+	case 6:     //b0110
+		GPIOB->ODR |= 0x1;
+		GPIOC->ODR |= (0x1 << 4);
+		break;
+	case 7:     //b0111
+		GPIOB->ODR |= 0x1;
 		GPIOC->ODR |= (0x3 << 4);
+		break;
+	case 8:     //b1000
+		GPIOB->ODR |= 0x2;
+		break;
+	case 9:     //b1001
+		GPIOB->ODR |= 0x2;
+		GPIOC->ODR |= (0x2 << 4);
+		break;
 #endif
 	default:
 		break;
@@ -102,7 +118,18 @@ u8 channel_is_opaque(u8 chn)
 	 case 3:
 	 	return !BLOOD_VALUE3;
 #ifndef SMALL_MACHINE
-
+	 case 4:
+	 	return !BLOOD_VALUE4;
+	 case 5:
+	 	return !BLOOD_VALUE5;
+	 case 6:
+	 	return !BLOOD_VALUE6;
+	 case 7:
+	 	return !BLOOD_VALUE7;
+	 case 8:
+	 	return !BLOOD_VALUE8;
+	 case 9:
+	 	return !BLOOD_VALUE9;
 #endif
 	default:
 		return 1;

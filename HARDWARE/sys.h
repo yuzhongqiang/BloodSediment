@@ -36,11 +36,11 @@
 typedef u8 (*TIMER_FN)(void);
 
 /* MOTOR 0 */
-#define MOTOR0_DIR_UP 1
-#define MOTOR0_DIR_DOWN  0
+#define MOTOR0_DIR_UP 0
+#define MOTOR0_DIR_DOWN  1
 /* MOTOR 1 */
-#define MOTOR0_DIR_FWD 1
-#define MOTOR0_DIR_BWD  0
+#define MOTOR0_DIR_FWD 0
+#define MOTOR0_DIR_BWD  1
 /* MOTOR 2 */
 #define MOTOR0_DIR_PUSH 1
 #define MOTOR0_DIR_RELEASE  0
@@ -133,10 +133,11 @@ void jtag_set(u8 mode);
 /****************************************************************
                                           Console commands
 ****************************************************************/
-#define CONSOLE_CMD_NONE      0
-#define CONSOLE_CMD_RUNNING   1
-#define CONSOLE_CMD_PAUSE     2
-#define CONSOLE_CMD_RESUME    3
+#define CONSOLE_STAT_INIT      0
+#define CONSOLE_STAT_RUNNING   1
+#define CONSOLE_STAT_PAUSE     2
+
+#define CONSOLE_STAT_MNG  3
 
 
 

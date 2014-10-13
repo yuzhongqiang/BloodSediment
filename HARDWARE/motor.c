@@ -42,7 +42,7 @@ u32 g_cur_trip1;
 u32 g_cur_trip2;
 
 /* motor1's docking place (from reset position) */
-u32 g_docking[10] = {4000, 6000, 8000, 10000, 12000,
+u32 g_docking[10] = {1400, 6000, 8000, 10000, 12000,
 					 14000,16000,18000,20000, 22000};
 
 //定时器3中断服务程序	 
@@ -91,21 +91,26 @@ void _timer_init(u16 freq_div, u16 arr)
 void _motor_startup(u8 motor_id)
 {	
 	GPIOC->ODR |= (1 << motor_id);  /* MT_x */
-	delay_ms(1);
+	//GPIOC->ODR |= 0x07;  /* ONLY for test */
+	delay_us(100);
+	GPIOA->ODR &= 0xffBf;     //ENx置低，打开电机
+	delay_us(100);
 
 	TIM3->DIER |= (1 << 0);   	//允许更新中断		
-	GPIOA->ODR &= 0xffBf;     //ENx置低，打开电机
 	TIM3->CR1 |= 0x01;      	//使能定时器3
+	delay_us(100);
 }
 
 void _motor_stop(u8 motor_id)
 {
-	GPIOC->ODR &= (~(1 << motor_id));
-	delay_ms(1);
-
 	TIM3->DIER &= (~(1<<0));    //Disable timer3 interrupt
 	TIM3->CR1 &= ~(1 << 0);;    //关闭定时器3
+ 	delay_us(100);
+	
  	GPIOA->ODR |= 0x0040;	//ENx置高，关闭电机
+ 	delay_us(100);
+	GPIOC->ODR &= (~(1 << motor_id));
+	delay_us(100);
 }
 
 /* 返回值：
@@ -175,7 +180,7 @@ void motor_move_steps(u8 motor_id, u8 dir, u32 steps)
 	g_timer_fn = _fn_motor_move_steps;
 	g_demand_steps = steps;
 	_motor_set_dir(dir);
-	_motor_startup(motor_id);	
+	_motor_startup(motor_id);
 }
 
 void motor_move_steps_blocked(u8 motor_id, u8 dir, u32 steps)
@@ -188,6 +193,7 @@ void motor_move_steps_blocked(u8 motor_id, u8 dir, u32 steps)
 	/* blocking ... */
 	while (g_demand_steps > 0)
 		;
+	_motor_stop(motor_id);
 }
 
 /**************************************************************
@@ -274,16 +280,16 @@ void motor_reset_position_blocked(u8 motor_id)
 	{
 	case 0:
 		if (_motor0_is_reset())
-			motor_move_steps_blocked(motor_id, MOTOR0_DIR_UP, 200);
+			motor_move_steps_blocked(motor_id, MOTOR0_DIR_UP, 600);
 
 		g_demand_steps = 1;
 		g_timer_fn = _fn_motor0_reset_position_blocked;
 		_motor_set_dir(MOTOR0_DIR_DOWN);
-		_motor_startup(motor_id);			
+		_motor_startup(motor_id);	
 		break;
 	case 1:
 		if (_motor1_is_reset())
-			motor_move_steps_blocked(motor_id, MOTOR0_DIR_FWD, 200);
+			motor_move_steps_blocked(motor_id, MOTOR0_DIR_FWD, 600);
 
 		g_demand_steps = 1;
 		g_timer_fn = _fn_motor1_reset_position_blocked;
@@ -306,6 +312,7 @@ void motor_reset_position_blocked(u8 motor_id)
 	/* blocking ... */
 	while (g_demand_steps > 0)
 		;
+	_motor_stop(motor_id);
 }
 
 #if 0
@@ -357,7 +364,7 @@ static u8 _fn_motor0_scan_chn(void)
 	u16 temp;
 
 	temp = GPIOA->ODR;
-	if (!(temp & 0x0010))
+	if (!(temp & 0x0010))  //CLKX is low
 	{
 		if (channel_is_opaque(g_cur_chn))
 		{
@@ -375,6 +382,9 @@ should_stop:
 	tubes[g_cur_chn].remains--;
 	tubes[g_cur_chn].last_scan_time = rtc_get_sec();
 	g_scan_stage = SCAN_STAGE_SCANFINISH;
+	g_cur_trip0 = 0;
+	g_demand_steps = 0;
+	
 	return 0;		
 }
 
@@ -382,10 +392,6 @@ void motor_scan_chn(u8 motor_id, u8 chn_id)
 {
 	u8 dir;
 	u32 steps;
-	
-	g_scan_stage = SCAN_STAGE_SCANNING;
-	g_timer_fn = _fn_motor0_scan_chn;
-	tubes[chn_id].scan_times[13 - tubes[chn_id].remains] = rtc_get_sec();
 
 	/* motor1 reach to place */
 	if (g_prev_chn == 0xff)
@@ -403,9 +409,10 @@ void motor_scan_chn(u8 motor_id, u8 chn_id)
 		steps = g_docking[g_prev_chn] - g_docking[g_cur_chn];
 		dir = MOTOR0_DIR_BWD;
 	}
-	motor_move_steps(1, dir, steps);
+	motor_move_steps_blocked(1, dir, steps);
 
 	/* do shaking when scan the first time */
+#if 0
 	if (tubes[g_cur_chn].remains == MAX_MEASURE_TIMES)
 	{
 		motor_move_steps(2, 0, 500);
@@ -415,10 +422,20 @@ void motor_scan_chn(u8 motor_id, u8 chn_id)
 		motor_move_steps(2, 0, 500);
 		motor_move_steps(2, 1, 500);
 	}
+#endif
 
 	/* start schan ... */
+	
+	g_scan_stage = SCAN_STAGE_SCANNING;
+	g_timer_fn = _fn_motor0_scan_chn;
+	tubes[chn_id].scan_times[13 - tubes[chn_id].remains] = rtc_get_sec();
+	g_demand_steps = 1;
+
 	_motor_set_dir(MOTOR0_DIR_UP);
-	_motor_startup(motor_id);	
+	_motor_startup(0);
+	while (g_demand_steps > 0)
+		;
+	_motor_stop(0);
 }
 
 /*
@@ -427,7 +444,7 @@ void motor_scan_chn(u8 motor_id, u8 chn_id)
 */
 void motor_init(void)
 {
-	_timer_init(7200, 10);
+	_timer_init(7200, 1);
 	delay_ms(10);
 	
 	/*
@@ -450,7 +467,7 @@ void motor_init(void)
 	GPIOB->CRH |= 0x00000088;
 									
 	// 电机回复到起始位置
-	//motor_reset_position_blocked(0);
+	motor_reset_position_blocked(0);
 	motor_reset_position_blocked(1);
 	//motor_reset_position_blocked(2);
 }
