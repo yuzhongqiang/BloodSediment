@@ -42,8 +42,20 @@ u32 g_cur_trip1;
 u32 g_cur_trip2;
 
 /* motor1's docking place (from reset position) */
-u32 g_docking[10] = {1400, 6000, 8000, 10000, 12000,
-					 14000,16000,18000,20000, 22000};
+#define POS0      1400
+#define POS_INTV 1000
+u32 g_docking[10] = {
+	POS0,
+	POS0 + 1 * POS_INTV,
+	POS0 + 2 * POS_INTV,
+	POS0 + 3 * POS_INTV,
+	POS0 + 4 * POS_INTV,
+	POS0 + 5 * POS_INTV,
+	POS0 + 6 * POS_INTV,
+	POS0 + 7 * POS_INTV,
+	POS0 + 8 * POS_INTV,
+	POS0 + 9 * POS_INTV
+};
 
 //定时器3中断服务程序	 
 void TIM3_IRQHandler(void)
@@ -393,13 +405,13 @@ void motor_scan_chn(u8 motor_id, u8 chn_id)
 	u8 dir;
 	u32 steps;
 
-	/* motor1 reach to place */
+	/* motor1 reach to resetting place */
 	if (g_prev_chn == 0xff)
 	{
 		steps = g_docking[g_cur_chn];
 		dir = MOTOR0_DIR_FWD;
 	}
-	else if (g_docking[g_cur_chn] > g_docking[g_prev_chn])
+	else if (g_cur_chn > g_prev_chn)
 	{
 		steps = g_docking[g_cur_chn] - g_docking[g_prev_chn];
 		dir = MOTOR0_DIR_FWD;
@@ -412,15 +424,15 @@ void motor_scan_chn(u8 motor_id, u8 chn_id)
 	motor_move_steps_blocked(1, dir, steps);
 
 	/* do shaking when scan the first time */
-#if 0
+#if 1
 	if (tubes[g_cur_chn].remains == MAX_MEASURE_TIMES)
 	{
-		motor_move_steps(2, 0, 500);
-		motor_move_steps(2, 1, 500);
-		motor_move_steps(2, 0, 500);
-		motor_move_steps(2, 1, 500);
-		motor_move_steps(2, 0, 500);
-		motor_move_steps(2, 1, 500);
+		motor_move_steps_blocked(2, 1, 15);
+		motor_reset_position_blocked(2);
+		motor_move_steps_blocked(2, 1, 15);
+		motor_reset_position_blocked(2);
+		motor_move_steps_blocked(2, 1, 15);
+		motor_reset_position_blocked(2);
 	}
 #endif
 
@@ -444,7 +456,7 @@ void motor_scan_chn(u8 motor_id, u8 chn_id)
 */
 void motor_init(void)
 {
-	_timer_init(7200, 1);
+	_timer_init(7200, 5);
 	delay_ms(10);
 	
 	/*
@@ -467,8 +479,8 @@ void motor_init(void)
 	GPIOB->CRH |= 0x00000088;
 									
 	// 电机回复到起始位置
+	motor_reset_position_blocked(2);
 	motor_reset_position_blocked(0);
 	motor_reset_position_blocked(1);
-	//motor_reset_position_blocked(2);
 }
 

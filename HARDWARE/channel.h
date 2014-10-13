@@ -30,6 +30,7 @@ struct tube {
 
 u8 channel_is_opaque(u8 chn);
 void channel_init(void);
+void channel_init_for_debug(void);
 void channel_main(void);
 void channel_pause(void);
 void channel_resume(void);

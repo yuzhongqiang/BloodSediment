@@ -30,7 +30,8 @@ int main(void)
 	key_init();
 	*/
 	
-	channel_init();
+	//channel_init();
+	channel_init_for_debug();
 	motor_init();
 	
 	delay_ms(500);

@@ -231,10 +231,63 @@ static void channel_check_all(void)
         }
 		else
             tubes[i].status = CHN_STATUS_NONE;
-            
-		tubes[i].remains = MAX_MEASURE_TIMES;
-		for	(j=0; j<MAX_MEASURE_TIMES; j++)
-			tubes[i].values[j] = 0;
+	}
+}
+
+static void channel_check_all_for_debug(void)
+{
+    u8 i, j;
+    
+	for (i=0; i<MAX_CHANNELS; i++)
+	{
+	    if  (tubes[i].status != CHN_STATUS_NONE)
+            continue;
+        
+		channel_open(i);
+		switch (i)
+		{
+		case 0:
+			tubes[i].inplace = 0;
+			break;
+		case 1:
+			tubes[i].inplace = 0;
+			break;
+		case 2:
+			tubes[i].inplace = 0;
+			break;
+		case 3:
+			tubes[i].inplace = 0;
+			break;
+#ifndef SMALL_MACHINE
+	  	case 4:
+			tubes[i].inplace = 0;
+			break;
+		case 5:
+			tubes[i].inplace = 1;
+			break;
+		case 6:
+			tubes[i].inplace = 0;
+			break;
+		case 7:
+			tubes[i].inplace = 0;
+			break;
+		case 8:
+			tubes[i].inplace = 0;
+			break;
+		case 9:
+			tubes[i].inplace = 1;
+			break;
+#endif
+		}			
+		channel_close();
+        
+        if (tubes[i].inplace)
+        {
+            tubes[i].status = CHN_STATUS_WAITING;
+			tubes[i].insert_time = rtc_get_sec();
+        }
+		else
+            tubes[i].status = CHN_STATUS_NONE;
 	}
 }
 
@@ -242,20 +295,19 @@ static void channel_select_current(void)
 {
 	u8 i;
 
-	g_cur_chn = 0xff;
+	g_prev_chn = g_cur_chn;
 	for (i=0; i<MAX_CHANNELS; i++)
-	{
+	{		
 		if (!tubes[i].inplace)
 			continue;
-		else
+		if (tubes[i].remains == 0)
+			continue;
+
+		if (((tubes[i].remains != 0) && (rtc_get_sec()-tubes[i].last_scan_time > MOTOR0_INTERVAL_TIME)) 
+			|| (tubes[i].remains == 13))
 		{
-			if (((tubes[i].remains != 0) && (rtc_get_sec()-tubes[i].last_scan_time > MOTOR0_INTERVAL_TIME)) ||
-				(tubes[i].remains == 13))
-			{
-				g_prev_chn = g_cur_chn;
-				g_cur_chn = i;
-				return;
-			}
+			g_cur_chn = i;
+			return;
 		}
 	}
 }
@@ -307,8 +359,6 @@ void channel_init(void)
 		}
 		channel_close();
 				
-		if (tubes[i].inplace && g_cur_chn == 0xff)
-			g_cur_chn = i;
             if (tubes[i].inplace)
             {
                 tubes[i].status = CHN_STATUS_WAITING;
@@ -323,6 +373,69 @@ void channel_init(void)
 	}
 }
 
+
+void channel_init_for_debug(void)
+{
+	u8 i = 0, j = 0;
+
+	_channel_config();
+	
+	//³õÊ¼»¯Ñª³ÁÖµ
+	for (i=0; i<MAX_CHANNELS; i++)
+	{
+		channel_open(i);  
+		switch (i)
+		{
+		case 0:
+			tubes[i].inplace = 0;
+			break;
+		case 1:
+			tubes[i].inplace = 0;
+			break;
+		case 2:
+			tubes[i].inplace = 0;
+			break;
+		case 3:
+			tubes[i].inplace = 0;
+			break;
+#ifndef SMALL_MACHINE
+	  	case 4:
+			tubes[i].inplace = 0;
+			break;
+		case 5:
+			tubes[i].inplace = 1;
+			break;
+		case 6:
+			tubes[i].inplace = 0;
+			break;
+		case 7:
+			tubes[i].inplace = 0;
+			break;
+		case 8:	
+			tubes[i].inplace = 0;
+			break;
+		case 9:
+			tubes[i].inplace = 1;
+			break;
+#endif
+		}
+		channel_close();
+				
+            if (tubes[i].inplace)
+            {
+                tubes[i].status = CHN_STATUS_WAITING;
+			tubes[i].insert_time = rtc_get_sec();
+            }
+            else
+                tubes[i].status = CHN_STATUS_NONE;
+            
+		tubes[i].remains = MAX_MEASURE_TIMES;
+		for	(j=0; j<MAX_MEASURE_TIMES; j++)
+			tubes[i].values[j] = 0;
+	}
+}
+
+
 void channel_main()
 {
 	switch (g_scan_stage)
@@ -330,7 +443,8 @@ void channel_main()
 	case SCAN_STAGE_RESETING:
 		break;
 	case SCAN_STAGE_RESETED:
-		channel_check_all();
+		//channel_check_all();
+		channel_check_all_for_debug();
 		channel_select_current();
 		if (1 == g_pause)
 			break;

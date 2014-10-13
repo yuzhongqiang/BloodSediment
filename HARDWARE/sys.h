@@ -19,14 +19,14 @@
 ////////////////////////////////////////////////////////////////////////////////// 	  
 
 //机器架构定义
-#define SMALL_MACHINE
+//#define SMALL_MACHINE
 #if defined(SMALL_MACHINE)
 #define MAX_CHANNELS 4
 #else
 #define MAX_CHANNELS 10
 #endif
 
-#define MAX_MEASURE_TIMES 13
+#define MAX_MEASURE_TIMES 3//13
 
 /* 定时器中断中使用的回调函数
 * Return Value:
