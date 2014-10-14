@@ -10,7 +10,11 @@
 #include "rtc.h"
 
 struct tube tubes[MAX_CHANNELS];
-u8 g_cur_chn = 0xff;   // 编号从0开始，当前正在检测的试管，0xff表示没有需要检查的试管
+
+/* 0 - 9: running channel
+     0xff: reset position
+*/
+u8 g_cur_chn = 0xff;   
 u8 g_prev_chn = 0xff;
 extern u8 g_scan_stage;
 
@@ -43,7 +47,7 @@ void channel_open(u8 chn);
 u8 channel_is_opaque(u8 chn);
 void _channel_config(void);
 void channel_check_all(void);
-void channel_select_current(void);
+u8 channel_select_current(void);
 
 static void channel_close(void)
 {
@@ -291,7 +295,12 @@ static void channel_check_all_for_debug(void)
 	}
 }
 
-static void channel_select_current(void)
+/*
+	Return value:
+	1 - found a channel
+	0 - no relevant channel found
+*/
+static u8 channel_select_current(void)
 {
 	u8 i;
 
@@ -307,9 +316,12 @@ static void channel_select_current(void)
 			|| (tubes[i].remains == 13))
 		{
 			g_cur_chn = i;
-			return;
+			return 1;
 		}
 	}
+
+	// No relevant channel to  select
+	return 0;
 }
 
 void channel_init(void)
@@ -438,19 +450,24 @@ void channel_init_for_debug(void)
 
 void channel_main()
 {
+	u8 found;
+
 	switch (g_scan_stage)
 	{
 	case SCAN_STAGE_RESETING:
 		break;
 	case SCAN_STAGE_RESETED:
-		//channel_check_all();
-		channel_check_all_for_debug();
-		channel_select_current();
+		channel_check_all();
+		//channel_check_all_for_debug();
+		found = channel_select_current();
 		if (1 == g_pause)
 			break;
 		
 		g_scan_stage = SCAN_STAGE_SCANNING;
-		motor_scan_chn(0, g_cur_chn);
+		if (found)
+			motor_scan_chn(0, g_cur_chn);
+		else
+			g_scan_stage = SCAN_STAGE_RESETED;
 		break;
 	case SCAN_STAGE_SCANNING:
 		break;

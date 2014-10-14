@@ -26,7 +26,7 @@
 #define MAX_CHANNELS 10
 #endif
 
-#define MAX_MEASURE_TIMES 3//13
+#define MAX_MEASURE_TIMES 13//13
 
 /* 定时器中断中使用的回调函数
 * Return Value:
