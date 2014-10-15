@@ -1,370 +1,284 @@
-/*
-* Storage.c
-*
-*/
+#include "storage.h" 
+#include "delay.h" 
 
-#include <stm32f10x_lib.h>	
-#include <stm32f10x_i2c.h>
-#include <stm32f10x_rcc.h>
-#include "sys.h"
-#include "delay.h"
-#include "storage.h"
-
-/* Storage uses I2C1 */
-#if 0
-
-void I2C_Init(I2C_TypeDef* I2Cx, I2C_InitTypeDef* I2C_InitStruct)
-{
-  u16 tmpreg = 0, freqrange = 0;
-  u16 result = 0x04;
-  u32 pclk1 = 8000000;
-  RCC_ClocksTypeDef  rcc_clocks;
-
-  /* Check the parameters */
-  assert_param(IS_I2C_ALL_PERIPH(I2Cx));
-  assert_param(IS_I2C_MODE(I2C_InitStruct->I2C_Mode));
-  assert_param(IS_I2C_DUTY_CYCLE(I2C_InitStruct->I2C_DutyCycle));
-  assert_param(IS_I2C_OWN_ADDRESS1(I2C_InitStruct->I2C_OwnAddress1));
-  assert_param(IS_I2C_ACK_STATE(I2C_InitStruct->I2C_Ack));
-  assert_param(IS_I2C_ACKNOWLEDGE_ADDRESS(I2C_InitStruct->I2C_AcknowledgedAddress));
-  assert_param(IS_I2C_CLOCK_SPEED(I2C_InitStruct->I2C_ClockSpeed));
-
-/*---------------------------- I2Cx CR2 Configuration ------------------------*/
-  /* Get the I2Cx CR2 value */
-  tmpreg = I2Cx->CR2;
-  /* Clear frequency FREQ[5:0] bits */
-  tmpreg &= CR2_FREQ_Reset;
-  /* Get pclk1 frequency value */
-  RCC_GetClocksFreq(&rcc_clocks);
-  pclk1 = rcc_clocks.PCLK1_Frequency;
-  /* Set frequency bits depending on pclk1 value */
-  freqrange = (u16)(pclk1 / 1000000);
-  tmpreg |= freqrange;
-  /* Write to I2Cx CR2 */
-  I2Cx->CR2 = tmpreg;
-
-/*---------------------------- I2Cx CCR Configuration ------------------------*/
-  /* Disable the selected I2C peripheral to configure TRISE */
-  I2Cx->CR1 &= CR1_PE_Reset;
-
-  /* Reset tmpreg value */
-  /* Clear F/S, DUTY and CCR[11:0] bits */
-  tmpreg = 0;
-
-  /* Configure speed in standard mode */
-  if (I2C_InitStruct->I2C_ClockSpeed <= 100000)
-  {
-    /* Standard mode speed calculate */
-    result = (u16)(pclk1 / (I2C_InitStruct->I2C_ClockSpeed << 1));
-    /* Test if CCR value is under 0x4*/
-    if (result < 0x04)
-    {
-      /* Set minimum allowed value */
-      result = 0x04;  
-    }
-    /* Set speed value for standard mode */
-    tmpreg |= result;	  
-    /* Set Maximum Rise Time for standard mode */
-    I2Cx->TRISE = freqrange + 1; 
-  }
-  /* Configure speed in fast mode */
-  else /*(I2C_InitStruct->I2C_ClockSpeed <= 400000)*/
-  {
-    if (I2C_InitStruct->I2C_DutyCycle == I2C_DutyCycle_2)
-    {
-      /* Fast mode speed calculate: Tlow/Thigh = 2 */
-      result = (u16)(pclk1 / (I2C_InitStruct->I2C_ClockSpeed * 3));
-    }
-    else /*I2C_InitStruct->I2C_DutyCycle == I2C_DutyCycle_16_9*/
-    {
-      /* Fast mode speed calculate: Tlow/Thigh = 16/9 */
-      result = (u16)(pclk1 / (I2C_InitStruct->I2C_ClockSpeed * 25));
-      /* Set DUTY bit */
-      result |= I2C_DutyCycle_16_9;
-    }
-    /* Test if CCR value is under 0x1*/
-    if ((result & CCR_CCR_Set) == 0)
-    {
-      /* Set minimum allowed value */
-      result |= (u16)0x0001;  
-    }
-    /* Set speed value and set F/S bit for fast mode */
-    tmpreg |= result | CCR_FS_Set;
-    /* Set Maximum Rise Time for fast mode */
-    I2Cx->TRISE = (u16)(((freqrange * 300) / 1000) + 1);  
-  }
-  /* Write to I2Cx CCR */
-  I2Cx->CCR = tmpreg;
-
-  /* Enable the selected I2C peripheral */
-  I2Cx->CR1 |= CR1_PE_Set;
-
-/*---------------------------- I2Cx CR1 Configuration ------------------------*/
-  /* Get the I2Cx CR1 value */
-  tmpreg = I2Cx->CR1;
-  /* Clear ACK, SMBTYPE and  SMBUS bits */
-  tmpreg &= CR1_CLEAR_Mask;
-  /* Configure I2Cx: mode and acknowledgement */
-  /* Set SMBTYPE and SMBUS bits according to I2C_Mode value */
-  /* Set ACK bit according to I2C_Ack value */
-  tmpreg |= (u16)((u32)I2C_InitStruct->I2C_Mode | I2C_InitStruct->I2C_Ack);
-  /* Write to I2Cx CR1 */
-  I2Cx->CR1 = tmpreg;
-
-/*---------------------------- I2Cx OAR1 Configuration -----------------------*/
-  /* Set I2Cx Own Address1 and acknowledged address */
-  I2Cx->OAR1 = (I2C_InitStruct->I2C_AcknowledgedAddress | I2C_InitStruct->I2C_OwnAddress1);
-}
-#endif
-
-void I2C_StructInit(I2C_InitTypeDef* I2C_InitStruct)
-{
-/*---------------- Reset I2C init structure parameters values ----------------*/
-  /* Initialize the I2C_Mode member */
-  I2C_InitStruct->I2C_Mode = I2C_Mode_I2C;
-
-  /* Initialize the I2C_DutyCycle member */
-  I2C_InitStruct->I2C_DutyCycle = I2C_DutyCycle_2;
-
-  /* Initialize the I2C_OwnAddress1 member */
-  I2C_InitStruct->I2C_OwnAddress1 = 0;
-
-  /* Initialize the I2C_Ack member */
-  I2C_InitStruct->I2C_Ack = I2C_Ack_Disable;
-
-  /* Initialize the I2C_AcknowledgedAddress member */
-  I2C_InitStruct->I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
-
-  /* initialize the I2C_ClockSpeed member */
-  I2C_InitStruct->I2C_ClockSpeed = 5000;
+//初始化IIC
+void IIC_Init(void)
+{					     
+ 	//RCC->APB2ENR| = 1<<4;//先使能外设IO PORTC时钟 							 
+	GPIOB->CRL &= 0x00FFFFFF;//PB6-SCL; PB7-SDA 推挽输出
+	GPIOB->CRL |= 0x33000000;	   
+	GPIOB->ODR |= (3 << 6);     //PB6 PB7输出高
 }
 
-void I2C_GenerateSTART(I2C_TypeDef* I2Cx, FunctionalState NewState)
+//产生IIC起始信号
+void IIC_Start(void)
 {
-  /* Check the parameters */
-  assert_param(IS_I2C_ALL_PERIPH(I2Cx));
-  assert_param(IS_FUNCTIONAL_STATE(NewState));
-
-  if (NewState != DISABLE)
-  {
-    /* Generate a START condition */
-    I2Cx->CR1 |= CR1_START_Set;
-  }
-  else
-  {
-    /* Disable the START condition generation */
-    I2Cx->CR1 &= CR1_START_Reset;
-  }
+	SDA_OUT();     //sda线输出
+	IIC_SDA = 1;	  	  
+	IIC_SCL = 1;
+	delay_us(4);
+ 	IIC_SDA = 0;//START:when CLK is high,DATA change form high to low 
+	delay_us(4);
+	IIC_SCL = 0;//钳住I2C总线，准备发送或接收数据 
 }
 
-void I2C_Send7bitAddress(I2C_TypeDef* I2Cx, u8 Address, u8 I2C_Direction)
+//产生IIC停止信号
+void IIC_Stop(void)
 {
-  /* Check the parameters */
-  assert_param(IS_I2C_ALL_PERIPH(I2Cx));
-  assert_param(IS_I2C_DIRECTION(I2C_Direction));
-
-  /* Test on the direction to set/reset the read/write bit */
-  if (I2C_Direction != I2C_Direction_Transmitter)
-  {
-    /* Set the address bit0 for read */
-    Address |= OAR1_ADD0_Set;
-  }
-  else
-  {
-    /* Reset the address bit0 for write */
-    Address &= OAR1_ADD0_Reset;
-  }
-  /* Send the address */
-  I2Cx->DR = Address;
-}	
-void I2C_GenerateSTOP(I2C_TypeDef* I2Cx, FunctionalState NewState)
-{
-  /* Check the parameters */
-  assert_param(IS_I2C_ALL_PERIPH(I2Cx));
-  assert_param(IS_FUNCTIONAL_STATE(NewState));
-
-  if (NewState != DISABLE)
-  {
-    /* Generate a STOP condition */
-    I2Cx->CR1 |= CR1_STOP_Set;
-  }
-  else
-  {
-    /* Disable the STOP condition generation */
-    I2Cx->CR1 &= CR1_STOP_Reset;
-  }
+	SDA_OUT();//sda线输出
+	IIC_SCL = 0;
+	IIC_SDA = 0;//STOP:when CLK is high DATA change form low to high
+ 	delay_us(4);
+	IIC_SCL = 1; 
+	IIC_SDA = 1;//发送I2C总线结束信号
+	delay_us(4);							   	
 }
 
-#if 0
-void storage_init(void)
+//等待应答信号到来
+//返回值：1，接收应答失败
+//        0，接收应答成功
+u8 IIC_Wait_Ack(void)
 {
-	u16 tmpreg = 0, freqrange = 0;
-  	u16 result = 0x04;
-  
-  	/* I2C1 Deinit */
-	RCC->APB1RSTR |= (1 << 21);   	//复位I2C_1
-	delay_us(100);
-	RCC->APB1RSTR &= ~(1 << 21);	//复位结束
-	RCC->APB1ENR  |= (1 << 21);		//使能I2C_1
+	u8 ucErrTime = 0;
+	SDA_IN();      //SDA设置为输入  
+	IIC_SDA = 1;
+	delay_us(1);	   
+	IIC_SCL = 1;
+	delay_us(1);	 
+	while (READ_SDA)
+	{
+		ucErrTime++;
+		if (ucErrTime>250)
+		{
+			IIC_Stop();
+			return 1;
+		}
+	}
+	IIC_SCL = 0;//时钟输出0 
+
+	return 0;  
+} 
+
+//产生ACK应答
+void IIC_Ack(void)
+{
+	IIC_SCL = 0;
+	SDA_OUT();
+	IIC_SDA = 0;
+	delay_us(2);
+	IIC_SCL = 1;
+	delay_us(2);
+	IIC_SCL = 0;
+}
+
+//不产生ACK应答		    
+void IIC_NAck(void)
+{
+	IIC_SCL = 0;
+	SDA_OUT();
+	IIC_SDA = 1;
+	delay_us(2);
+	IIC_SCL = 1;
+	delay_us(2);
+	IIC_SCL = 0;
+}
+
+//IIC发送一个字节
+//返回从机有无应答
+//1，有应答
+//0，无应答			  
+void IIC_Send_Byte(u8 txd)
+{                        
+    u8 t;   
+	SDA_OUT(); 	    
+    IIC_SCL = 0;//拉低时钟开始数据传输
+    for (t = 0; t < 8; t++)
+    {              
+        IIC_SDA = (txd&0x80)>>7;
+        txd <<= 1; 	  
+		delay_us(2);   //对TEA5767这三个延时都是必须的
+		IIC_SCL = 1;
+		delay_us(2); 
+		IIC_SCL = 0;	
+		delay_us(2);
+    }	 
+}
+
+//读1个字节，ack=1时，发送ACK，ack=0，发送nACK   
+u8 IIC_Read_Byte(unsigned char ack)
+{
+	unsigned char i,receive = 0;
+	SDA_IN();//SDA设置为输入
+    for (i = 0; i < 8; i++ )
+	{
+        IIC_SCL = 0; 
+        delay_us(2);
+		IIC_SCL = 1;
+        receive <<= 1;
+        if (READ_SDA)
+			receive++;   
+		delay_us(1); 
+    }					 
+    if (!ack)
+        IIC_NAck();//发送nACK
+    else
+        IIC_Ack(); //发送ACK  
+ 
+    return receive;
+}
+
+/************************************************************
+                                   AT24CXX Routines
+************************************************************/
+
+//初始化IIC接口
+void AT24CXX_Init(void)
+{
+	IIC_Init();
+}
+
+//在AT24CXX指定地址读出一个数据
+//ReadAddr:开始读数的地址  
+//返回值  :读到的数据
+u8 AT24CXX_ReadOneByte(u16 ReadAddr)
+{				  
+	u8 temp = 0;		  	    																 
+    IIC_Start();  
+	if (EE_TYPE>AT24C16) {
+		IIC_Send_Byte(0XA0);	   //发送写命令
+		IIC_Wait_Ack();
+		IIC_Send_Byte(ReadAddr>>8);//发送高地址	    
+	}
+	else
+		IIC_Send_Byte(0XA0+((ReadAddr/256)<<1));   //发送器件地址0XA0,写数据 	   
+
+	IIC_Wait_Ack(); 
+    IIC_Send_Byte(ReadAddr%256);   //发送低地址
+	IIC_Wait_Ack();	    
+	IIC_Start();  	 	   
+	IIC_Send_Byte(0XA1);           //进入接收模式			   
+	IIC_Wait_Ack();	 
+    temp = IIC_Read_Byte(0);		   
+    IIC_Stop();//产生一个停止条件	    
+	return temp;
+}
+
+//在AT24CXX指定地址写入一个数据
+//WriteAddr  :写入数据的目的地址    
+//DataToWrite:要写入的数据
+void AT24CXX_WriteOneByte(u16 WriteAddr,u8 DataToWrite)
+{				   	  	    																 
+    IIC_Start();  
+	if (EE_TYPE > AT24C16)	{
+		IIC_Send_Byte(0XA0);	    //发送写命令
+		IIC_Wait_Ack();
+		IIC_Send_Byte(WriteAddr>>8);//发送高地址	  
+	}else
+		IIC_Send_Byte(0XA0+((WriteAddr/256)<<1));   //发送器件地址0XA0,写数据 	 
+		
+	IIC_Wait_Ack();	   
+    IIC_Send_Byte(WriteAddr % 256);   //发送低地址
+	IIC_Wait_Ack(); 	 										  		   
+	IIC_Send_Byte(DataToWrite);     //发送字节							   
+	IIC_Wait_Ack();  		    	   
+    IIC_Stop();//产生一个停止条件 
+	delay_ms(10);	 
+}
+
+//在AT24CXX里面的指定地址开始写入长度为Len的数据
+//该函数用于写入16bit或者32bit的数据.
+//WriteAddr  :开始写入的地址  
+//DataToWrite:数据数组首地址
+//Len        :要写入数据的长度2,4
+void AT24CXX_WriteLenByte(u16 WriteAddr,u32 DataToWrite,u8 Len)
+{  	
+	u8 t;
 	
-	/* I2Cx CR2 Configuration */
-	tmpreg = I2C1->CR2;
-	tmpreg &= 0xFFC0;    // Disable I2C frequence
-	freqrange = (u16)(PCLK1_FREQ / 1000000);  //???
-	tmpreg |= freqrange;
-	I2C1->CR2 = tmpreg;
-
-	/* I2Cx CCR Configuration */
-  	/* Disable the selected I2C peripheral to configure TRISE */
-  	I2C1->CR1 &= 0xFFFE;
-
-  	/* Configure speed in standard mode, i2c clock speed = 100KHZ */
-  	tmpreg = 0;							  
-    result = (u16)(PCLK1_FREQ / (I2C1_CLOCK_SPEED << 1));
-    if (result < 0x04)      
-    	result = 0x04;     
-    tmpreg |= result;
-		  
-    I2C1->TRISE = freqrange + 1;   	
-  	I2C1->CCR = tmpreg;	 //???
-	I2C1->CR1 |= 0x0001;
-
-	/* I2Cx CR1 Configuration */
-    tmpreg = I2C1->CR1;
-    tmpreg &= 0xFBF5; 
-	tmpreg |= 0x0400;   // Enable ACK
-    I2C1->CR1 = tmpreg;
-
-	/* Set I2Cx Own Address1 and acknowledged address */
-  	I2C1->OAR1 = 0x4000;
-
-	/* Enable Buffer Interrupt */
-	//////I2C1->CR2 |= 0x0400; 
-}	 
-
-void i2c1_gen_start(bool enable)
-{
-  if (enable)
-    /* Generate a START condition */
-    I2C1->CR1 |= 0x0100;
-  else
-    /* Disable the START condition generation */
-    I2C1->CR1 &= 0xFEFF;
+	for (t = 0; t < Len; t++) {
+		AT24CXX_WriteOneByte(WriteAddr+t,(DataToWrite >> (8*t)) & 0xff);
+	}												    
 }
 
- void i2c1_gen_stop(bool enable)
-{
-  if (enable)
-    /* Generate a STOP condition */
-    I2C1->CR1 |= 0x0200;
-  else
-    /* Disable the STOP condition generation */
-    I2C1->CR1 &= 0xFDFF;
+//在AT24CXX里面的指定地址开始读出长度为Len的数据
+//该函数用于读出16bit或者32bit的数据.
+//ReadAddr   :开始读出的地址 
+//返回值     :数据
+//Len        :要读出数据的长度2,4
+u32 AT24CXX_ReadLenByte(u16 ReadAddr,u8 Len)
+{  	
+	u8 t;
+	u32 temp = 0;
+	for (t = 0;t < Len; t++) {
+		temp <<= 8;
+		temp += AT24CXX_ReadOneByte(ReadAddr+Len-t-1); 	 				   
+	}
+	return temp;												    
 }
 
- void i2c1_ack_config(bool enable)
+//检查AT24CXX是否正常
+//这里用了24XX的最后一个地址(255)来存储标志字.
+//如果用其他24C系列,这个地址要修改
+//返回1:检测失败
+//返回0:检测成功
+u8 AT24CXX_Check(void)
 {
-  if (enable)
-    I2C1->CR1 |= 0x0400;
-  else
-    I2C1->CR1 &= 0xFBFF;
+	u8 temp;
+	
+	temp = AT24CXX_ReadOneByte(255);//避免每次开机都写AT24CXX			   
+	if(temp == 0X55)
+		return 0;		   
+	else {		//排除第一次初始化的情况
+		AT24CXX_WriteOneByte(255, 0X55);
+	    temp = AT24CXX_ReadOneByte(255);	  
+		if(temp == 0X55)
+			return 0;
+	}
+	return 1;											  
 }
 
-void i2c1_send_data(u8 Data)
+//在AT24CXX里面的指定地址开始读出指定个数的数据
+//ReadAddr :开始读出的地址 对24c02为0~255
+//pBuffer  :数据数组首地址
+//NumToRead:要读出数据的个数
+void AT24CXX_Read(u16 ReadAddr,u8 *pBuffer,u16 NumToRead)
 {
-  	/* Write in the DR register the data to be sent */
-  	I2C1->DR = Data;
+	while (NumToRead)
+	{
+		*pBuffer++ = AT24CXX_ReadOneByte(ReadAddr++);	
+		NumToRead--;
+	}
 }
 
-u8 i2c1_revc_data(void)
+//在AT24CXX里面的指定地址开始写入指定个数的数据
+//WriteAddr :开始写入的地址 对24c02为0~255
+//pBuffer   :数据数组首地址
+//NumToWrite:要写入数据的个数
+void AT24CXX_Write(u16 WriteAddr,u8 *pBuffer,u16 NumToWrite)
 {
-  /* Return the data in the DR register */
-  return (u8)I2C1->DR;
+	while (NumToWrite--)
+	{
+		AT24CXX_WriteOneByte(WriteAddr,*pBuffer);
+		WriteAddr++;
+		pBuffer++;
+	}
 }
 
-void storage_send_data(u8 data)
-{
-	u16 temp;
-
-	i2c1_gen_start(1);
-	temp = I2C1->SR1;
-	I2C1->DR = 0x30;
-	while (!(temp &	0x0001))
-		temp = I2C1->SR1;
-
- 	i2c1_send_data(data);
-	i2c1_gen_stop(1);
-}
-#endif
-
-ErrorStatus I2C_CheckEvent(I2C_TypeDef* I2Cx, u32 I2C_EVENT)
-{
-  u32 lastevent = 0;
-  u32 flag1 = 0, flag2 = 0;
-  ErrorStatus status = ERROR;
-
-  /* Check the parameters */
-  assert_param(IS_I2C_ALL_PERIPH(I2Cx));
-  assert_param(IS_I2C_EVENT(I2C_EVENT));
-
-  /* Read the I2Cx status register */
-  flag1 = I2Cx->SR1;
-  flag2 = I2Cx->SR2;
-  flag2 = flag2 << 16;
-
-  /* Get the last event value from I2C status register */
-  lastevent = (flag1 | flag2) & FLAG_Mask;
-
-  /* Check whether the last event is equal to I2C_EVENT */
-  if (lastevent == I2C_EVENT )
-  {
-    /* SUCCESS: last event is equal to I2C_EVENT */
-    status = SUCCESS;
-  }
-  else
-  {
-    /* ERROR: last event is different from I2C_EVENT */
-    status = ERROR;
-  }
-
-  /* Return status */
-  return status;
-}
+/************************************************************
+                                     Storage Routines
+************************************************************/
 
 void storage_init(void)
 {
-   I2C_InitTypeDef init_type;
-
-   I2C_StructInit(&init_type);
-   init_type.I2C_Ack = I2C_Ack_Enable;
-   init_type.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
-   init_type.I2C_ClockSpeed = 100000;
-   I2C_Init(I2C1, &init_type);
-
-   I2C_GenerateSTART(I2C1, ENABLE);
-   while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT))
-   	;
-   I2C_Send7bitAddress(I2C1, 0x30, I2C_Direction_Transmitter);
-   while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED))
-   	;
-
+	AT24CXX_Init();
 }
 
-void storage_send_data(u8 data)
+void storage_read(void)
 {
 
 }
 
+void storage_write(void)
+{
 
-
-
-
-
-
-
-
-
-
-
-
+}
 

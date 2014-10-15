@@ -49,24 +49,37 @@ u8 _console_parse(void)
 	{
 	case 0:
 		break;
-	case 1:   //main page
-		if (0x01 == g_console_rxbuf[3])
+	case 1:   //main page		
+		if (0x01 == g_console_rxbuf[3])      /* Run */
 		{
 			channel_resume();
 			g_console_curstat= CONSOLE_STAT_RUNNING;
 		}
-		else if (0x02 == g_console_rxbuf[3])
+		else if (0x02 == g_console_rxbuf[3]) /* Pause */
 		{
 			channel_pause();
 			g_console_curstat = CONSOLE_STAT_PAUSE;
 		}
-		else if (0x03 == g_console_rxbuf[3])
+		else if (0x03 == g_console_rxbuf[3]) /* Enter manage page */
 		{
 			channel_pause();
 			g_console_curstat = CONSOLE_STAT_MNG;
 		}
 		break;
 	case 2:  // manage page
+		if (0x01 == g_console_rxbuf[3])  /* Query remain */
+		{
+			// Query
+		}
+		else if (0x02 == g_console_rxbuf[3])  /* Buy license */
+		{
+			// Buy license
+		}
+		else if (0x03 == g_console_rxbuf[3])  /* Return to main page */
+		{
+			channel_pause();
+			g_console_curstat = CONSOLE_STAT_MNG;
+		}
 		break;
 	default:
 		break;

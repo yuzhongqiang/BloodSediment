@@ -10,7 +10,8 @@
 #include "console.h"	 
 #include "reader.h"	 
 #include "comm.h"
-#include "rtc.h"	 
+#include "rtc.h"
+#include "storage.h"
 
 /* Newest command recieved */
 u8 g_cmd = CONSOLE_STAT_INIT;
@@ -52,7 +53,7 @@ int main(void)
 	comm_init(9600);
 	*/
 	
-	;
+	storage_init();
 	while (1) {
 		
 		delay_ms(1);
