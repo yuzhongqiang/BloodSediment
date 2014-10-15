@@ -30,9 +30,9 @@ int main(void)
 	key_init();
 	*/
 	
-	channel_init();
+	//channel_init();
 	//channel_init_for_debug();
-	motor_init();
+	//motor_init();
 	
 	delay_ms(500);
 	
@@ -46,12 +46,18 @@ int main(void)
 	//reader_init(9600);
 
 	/* LCD initializing (UART1) */
-	console_init(9600);
+	//console_init(9600);
 
 	/* PC communication initializing (UART4)
 	comm_init(9600);
 	*/
 	
+	;
+	while (1) {
+		
+		delay_ms(1);
+	}
+
 	while (1)
 	{
 #if 1

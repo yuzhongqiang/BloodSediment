@@ -16,11 +16,12 @@ File 3,1,<.\HARDWARE\sys.c><sys.c>
 File 3,1,<.\HARDWARE\comm.c><comm.c>
 File 3,1,<.\HARDWARE\printer.c><printer.c>
 File 3,1,<.\HARDWARE\reader.c><reader.c>
-File 3,1,<.\HARDWARE\storage.c><storage.c>
 File 3,1,<.\HARDWARE\rtc.c><rtc.c>
 File 3,1,<.\HARDWARE\channel.c><channel.c>
 File 3,1,<.\HARDWARE\motor.c><motor.c>
 File 3,1,<.\HARDWARE\console.c><console.c>
+File 3,1,<.\HARDWARE\myiic.c><myiic.c>
+File 3,1,<.\HARDWARE\24cxx.c><24cxx.c>
 
 
 Options 1,0,0  // Target 'Target 1'
@@ -81,7 +82,7 @@ Options 1,0,0  // Target 'Target 1'
  ADSCMISC ()
  ADSCDEFN ()
  ADSCUDEF ()
- ADSCINCD (.\HARDWARE)
+ ADSCINCD (.\HARDWARE;C:\Keil\ARM\INC\ST\STM32F10x)
  ADSASFLG { 1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }
  ADSAMISC ()
  ADSADEFN ()
