@@ -13,7 +13,7 @@
 /* IC Reader uses USART2 */
 
 /* 存放充值数据的快号 */
-#define VALUE_BLOCK 0x04
+#define VALUE_BLOCK (0x04)
 
 /* 串口2中断服务程序
    注意,读取USARTx->SR能避免莫名其妙的错误
@@ -86,22 +86,6 @@ static u8 reader_checksum(u8* data, u8 offset, u8 len)
 	return temp; 
 }
 
-/*
-	数据存放格式定义:
-	+---------------------------------------------------------------------------------------
-	| 命令头(1 byte) 	命令长度(1 byte)	命令字(1 byte)	数据(n byte)	校验(1 byte) |
-	+---------------------------------------------------------------------------------------
-	| 7F				2~7E				xx				…				CRC			    |	
-	+---------------------------------------------------------------------------------------
-
-	数据存放位置:
-	Block4: 总充值数目
-	Block7: Block4~7所在扇区的key和存取控制码:
-			keyA:             0xff 0xff 0xff 0xff 0xff 0xff
-			Control Code: 0xff 0x03 0x80 0x00  [Block0~2:rw  Block4:keyA(w) CC(rw) keyB(rw) -- need keyA|keyB]
-			keyB:             0xff 0xff 0xff 0xff 0xff 0xff
-*/
-
 static void _adjust_buf(u8 *sbuf, u8 slen, u8 *dbuf, u8 *dlen)
 {
 	u8 i = 0;
@@ -116,6 +100,22 @@ static void _adjust_buf(u8 *sbuf, u8 slen, u8 *dbuf, u8 *dlen)
 	*dlen = j;
 }
 
+/*
+	数据存放格式定义:
+	+---------------------------------------------------------------------------------------
+	| 命令头(1 byte) 	命令长度(1 byte)	命令字(1 byte)	数据(n byte)	校验(1 byte) |
+	+---------------------------------------------------------------------------------------
+	| 7F				2~7E				xx				…				CRC			    |	
+	+---------------------------------------------------------------------------------------
+
+	数据存放位置:
+	Block4: 总充值数目
+	Block7: Block4~7所在扇区的key和存取控制码:
+			keyA:             0xff 0xff 0xff 0xff 0xff 0xff
+			Control Code: 0xff 0x07 0x80 0x00  [Block0~2:rw  Block4:keyA(w) CC(rw) keyB(rw) -- need keyA|keyB]
+			keyB:             0xff 0xff 0xff 0xff 0xff 0xff
+*/
+
 /* 改变BlockX的keyA|CC|keyB */
 void reader_change_cc(u8 block)
 {
@@ -124,10 +124,10 @@ void reader_change_cc(u8 block)
 	u8 buf[60];
 	u8 i;
 	
-	u8 tmp_buf[27] = {0x7f, 0x19/*len*/, 0x15/*cmd*/,  VALUE_BLOCK/*block#*/,
+	u8 tmp_buf[27] = {0x7f, 0x19/*len*/, 0x15/*cmd*/,  block+3/*block7*/,
 				    	/*keyB*/0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 						/*data-keyA*/0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-						/*data-CC*/0xff, 0x03, 0x80, 0x00,
+						/*data-CC*/0xff, 0x07, 0x80, 0x00,
 						/*data-keyB*/0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 						/*checksum*/};
 	checksum = reader_checksum(tmp_buf, 2, 24);
@@ -166,7 +166,7 @@ void reader_write_value(u16 value)
 	u8 buf[32];
 	u8 i;
 	
-	u8 tmp_buf[15] = {0x7f, 0x0d/*0x0e?*/, 0x12, 0x04, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,};
+	u8 tmp_buf[15] = {0x7f, 0x0d, 0x12, 0x04, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,};
 	*((u32*)(tmp_buf+10)) = value;
 	checksum = reader_checksum(tmp_buf, 2, 12/*13?*/);
 	tmp_buf[14] = checksum;
@@ -179,6 +179,9 @@ void reader_write_value(u16 value)
 			;
 		USART2->DR = buf[i];   
 	}
+
+	g_reader_rxcnt = 0;
+	reader_recv(4000);
 }
 
 /* 一键读块
@@ -192,16 +195,15 @@ void reader_write_value(u16 value)
 		卡号（4）
 		数据(16)
 */
-void reader_read_value(void)
+u32 reader_read_block(u8 block)
 {
 	u8 checksum = 0;	
 	u8 data_len = 0;
 	u8 buf[60];
 	u8 i;
 	
-	u8 tmp_buf[27] = {0x7f, 0x19/*len*/, 0x14/*cmd*/,  VALUE_BLOCK/*block#*/,
+	u8 tmp_buf[27] = {0x7f, 0x9/*len*/, 0x14/*cmd*/,  block/*block#*/,
 				    	/*keyA*/0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-
 						/*checksum*/};
 	checksum = reader_checksum(tmp_buf, 2, 24);
 	tmp_buf[14] = checksum;
@@ -217,6 +219,8 @@ void reader_read_value(void)
 
 	g_reader_rxcnt = 0;
 	reader_recv(4000);
+
+	
 }	
 
 /* Start recieve for $time ms */

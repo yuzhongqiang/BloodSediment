@@ -81,6 +81,9 @@ u8 _console_parse(void)
 		else if (0x02 == g_console_rxbuf[3])  /* Buy license */
 		{
 			// Buy license
+			reader_change_cc(4);
+
+			
 			sprintf(str, "mng_lbl_value.text=สฃำเดฮสý:%d\n", remain); 
 			storage_save(0x1234);
 		}
