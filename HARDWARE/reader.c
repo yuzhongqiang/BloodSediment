@@ -12,6 +12,9 @@
 
 /* IC Reader uses USART2 */
 
+/* ´æ·Å³äÖµÊı¾İµÄ¿ìºÅ */
+#define VALUE_BLOCK 0x04
+
 /* ´®¿Ú2ÖĞ¶Ï·şÎñ³ÌĞò
    ×¢Òâ,¶ÁÈ¡USARTx->SRÄÜ±ÜÃâÄªÃûÆäÃîµÄ´íÎó
 */   	
@@ -59,11 +62,17 @@ void reader_init(u32 baud)
 
 static u8 _send_byte(u8 ch)
 {
-	while ((USART3->SR & 0x40) == 0)	//µÈ´ı×ÜÏß¿ÕÏĞ
+	while ((USART2->SR & 0x40) == 0)	//µÈ´ı×ÜÏß¿ÕÏĞ
 		;
 
-	USART3->DR = ch;      
+	USART2->DR = ch;      
 	return ch;
+}
+
+void reader_send_str(u8* str)
+{
+	while (*str)
+		_send_byte(*str++);
 }
 
 static u8 reader_checksum(u8* data, u8 offset, u8 len)
@@ -82,7 +91,7 @@ static u8 reader_checksum(u8* data, u8 offset, u8 len)
 	+---------------------------------------------------------------------------------------
 	| ÃüÁîÍ·(1 byte) 	ÃüÁî³¤¶È(1 byte)	ÃüÁî×Ö(1 byte)	Êı¾İ(n byte)	Ğ£Ñé(1 byte) |
 	+---------------------------------------------------------------------------------------
-	| 7F						2~7E					xx					¡­				CRC			    |	
+	| 7F				2~7E				xx				¡­				CRC			    |	
 	+---------------------------------------------------------------------------------------
 
 	Êı¾İ´æ·ÅÎ»ÖÃ:
@@ -115,7 +124,7 @@ void reader_change_cc(u8 block)
 	u8 buf[60];
 	u8 i;
 	
-	u8 tmp_buf[27] = {0x7f, 0x19/*len*/, 0x15/*cmd*/, 0x04/*block#*/,
+	u8 tmp_buf[27] = {0x7f, 0x19/*len*/, 0x15/*cmd*/,  VALUE_BLOCK/*block#*/,
 				    	/*keyB*/0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 						/*data-keyA*/0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 						/*data-CC*/0xff, 0x03, 0x80, 0x00,
@@ -127,20 +136,30 @@ void reader_change_cc(u8 block)
 	_adjust_buf(tmp_buf, 15, buf, &data_len);
 	for (i=0; i<data_len; i++)
 	{
-		_send_byte(buf[i]);
-		delay_us(100);   // ???
+		//µÈ´ı×ÜÏß¿ÕÏĞ
+		while ((USART2->SR & 0x40) == 0)
+			;
+		USART2->DR = buf[i];   
 	}
+
+	g_reader_rxcnt = 0;
+	reader_recv(4000);
+	
 }
 
 /*  ¿¨Æ¬Ò»¼ü³äÖµ
-0x12	Ò»¼ü³äÖµ	¿éµØÖ·£¨1£©
-ÑéÖ¤µÄÃÜÔ¿B£¨6£©
-³äÖµ½ğ¶î£¨4£©	×´Ì¬£¨1£©
-¿¨ÀàĞÍ£¨2£©
-¿¨ºÅ£¨4£©
-Óà¶î£¨4£©
+      command code: 0x12
+      block address:   1byte
+	ÑéÖ¤µÄÃÜÔ¿B£¨6bytes£©
+	³äÖµ½ğ¶î£¨4bytes£
+
+	·µ»ØÖµ:
+		×´Ì¬£¨1£©
+		¿¨ÀàĞÍ£¨2£©
+		¿¨ºÅ£¨4£©
+		Óà¶î£¨4£©
 */
-void reader_store_value(u16 value)
+void reader_write_value(u16 value)
 {
 	u8 checksum = 0;	
 	u8 data_len = 0;
@@ -155,44 +174,58 @@ void reader_store_value(u16 value)
 	_adjust_buf(tmp_buf, 15, buf, &data_len);
 	for (i=0; i<data_len; i++)
 	{
-		_send_byte(buf[i]);
-		delay_us(100);   // ???
+		//µÈ´ı×ÜÏß¿ÕÏĞ
+		while ((USART2->SR & 0x40) == 0)
+			;
+		USART2->DR = buf[i];   
 	}
 }
 
-/* Ò»¼ü¶ÁÖµ
-0x13	Ò»¼ü¿Û¿î	¿éµØÖ·£¨1£©
-ÑéÖ¤µÄÃÜÔ¿A£¨6£©
-¿Û¿î½ğ¶î£¨4£©	×´Ì¬£¨1£©
-¿¨ÀàĞÍ£¨2£©
-¿¨ºÅ£¨4£©
-Óà¶î£¨4£©
+/* Ò»¼ü¶Á¿é
+      command code: 0x14
+      block address:   1byte
+	ÑéÖ¤µÄÃÜÔ¿A£¨6bytes£©
+
+	·µ»ØÖµ:
+		×´Ì¬£¨1£©
+		¿¨ÀàĞÍ£¨2£©
+		¿¨ºÅ£¨4£©
+		Êı¾İ(16)
 */
-void reader_load_value(void)
+void reader_read_value(void)
 {
 	u8 checksum = 0;	
 	u8 data_len = 0;
-	u8 buf[32];
+	u8 buf[60];
 	u8 i;
 	
-	u8 tmp_buf[15] = {0x7f, 0x03, 0x06, 0x04,};
-	checksum = reader_checksum(tmp_buf, 1, 3);
-	tmp_buf[4] = checksum;
+	u8 tmp_buf[27] = {0x7f, 0x19/*len*/, 0x14/*cmd*/,  VALUE_BLOCK/*block#*/,
+				    	/*keyA*/0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 
-	_adjust_buf(tmp_buf, 5, buf, &data_len);
+						/*checksum*/};
+	checksum = reader_checksum(tmp_buf, 2, 24);
+	tmp_buf[14] = checksum;
+
+	_adjust_buf(tmp_buf, 15, buf, &data_len);
 	for (i=0; i<data_len; i++)
 	{
-		_send_byte(buf[i]);
-		delay_us(100);   // ???
-	}	
+		//µÈ´ı×ÜÏß¿ÕÏĞ
+		while ((USART2->SR & 0x40) == 0)
+			;
+		USART2->DR = buf[i];   
+	}
+
+	g_reader_rxcnt = 0;
+	reader_recv(4000);
 }	
 
-void reader_recv(void)
+/* Start recieve for $time ms */
+void reader_recv(u32 time)
 {
 	g_reader_rxcnt = 0;
 	USART2->CR1 |= (1 << 8);    //PEÖĞ¶ÏÊ¹ÄÜ
 	USART2->CR1 |= (1 << 5);    //½ÓÊÕ»º³åÇø·Ç¿ÕÖĞ¶ÏÊ¹ÄÜ	
-	delay_ms(3000);
+	delay_ms(time);
 	USART2->CR1 &= (~(1 << 8));    //PEÖĞ¶ÏÊ¹ÄÜ
 	USART2->CR1 &= (~(1 << 5));    //½ÓÊÕ»º³åÇø·Ç¿ÕÖĞ¶ÏÊ¹Ä
 

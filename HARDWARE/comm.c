@@ -97,3 +97,4 @@ void send_str(u8* str)
  	while (*str++)
 		send_ch(*str);
 }
+

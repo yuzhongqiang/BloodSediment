@@ -3,8 +3,8 @@
 #include "sys.h"
 
 //IO方向设置
-#define SDA_IN()  {GPIOB->CRL &= 0X0FFFFFFF; GPIOB->CRL |= (8 << 7);}
-#define SDA_OUT() {GPIOB->CRL &= 0X0FFFFFFF; GPIOB->CRL |= (3 << 7);}
+#define SDA_IN()  {GPIOB->CRL&=0X0FFFFFFF;GPIOB->CRL|=0x80000000;}
+#define SDA_OUT() {GPIOB->CRL&=0X0FFFFFFF;GPIOB->CRL|=0x30000000;}
 
 //IO操作函数	 
 #define IIC_SCL    PBout(6) //SCL
@@ -27,6 +27,7 @@
 void storage_init(void);
 void storage_read(void);
 void storage_write(void);
+u16 storage_query(void);
 
 #endif
 

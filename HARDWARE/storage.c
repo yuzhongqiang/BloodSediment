@@ -40,6 +40,7 @@ void IIC_Stop(void)
 u8 IIC_Wait_Ack(void)
 {
 	u8 ucErrTime = 0;
+
 	SDA_IN();      //SDA…Ë÷√Œ™ ‰»Î  
 	IIC_SDA = 1;
 	delay_us(1);	   
@@ -94,7 +95,7 @@ void IIC_Send_Byte(u8 txd)
     IIC_SCL = 0;//¿≠µÕ ±÷”ø™ º ˝æ›¥´ ‰
     for (t = 0; t < 8; t++)
     {              
-        IIC_SDA = (txd&0x80)>>7;
+        IIC_SDA = (txd & 0x80) >> 7;
         txd <<= 1; 	  
 		delay_us(2);   //∂‘TEA5767’‚»˝∏ˆ—” ±∂º «±ÿ–Îµƒ
 		IIC_SCL = 1;
@@ -153,7 +154,7 @@ u8 AT24CXX_ReadOneByte(u16 ReadAddr)
 		IIC_Send_Byte(0XA0+((ReadAddr/256)<<1));   //∑¢ÀÕ∆˜º˛µÿ÷∑0XA0,–¥ ˝æ› 	   
 
 	IIC_Wait_Ack(); 
-    IIC_Send_Byte(ReadAddr%256);   //∑¢ÀÕµÕµÿ÷∑
+    IIC_Send_Byte(ReadAddr % 256);   //∑¢ÀÕµÕµÿ÷∑
 	IIC_Wait_Ack();	    
 	IIC_Start();  	 	   
 	IIC_Send_Byte(0XA1);           //Ω¯»ÎΩ” ’ƒ£ Ω			   
@@ -210,7 +211,7 @@ u32 AT24CXX_ReadLenByte(u16 ReadAddr,u8 Len)
 	u32 temp = 0;
 	for (t = 0;t < Len; t++) {
 		temp <<= 8;
-		temp += AT24CXX_ReadOneByte(ReadAddr+Len-t-1); 	 				   
+		temp += AT24CXX_ReadOneByte(ReadAddr + Len - t - 1); 	 				   
 	}
 	return temp;												    
 }
@@ -280,5 +281,19 @@ void storage_read(void)
 void storage_write(void)
 {
 
+}
+
+/* ≤È—Ø £”‡¥Œ ˝
+	 £”‡¥Œ ˝¥Ê∑≈‘⁄eepromµƒµ⁄10£,11◊÷Ω⁄
+	10◊÷Ω⁄ «∏ﬂŒª£¨11◊÷Ω⁄ «µÕŒª  
+*/
+u16 storage_query(void)
+{
+	return AT24CXX_ReadLenByte(10, 4);
+}
+
+void storage_save(u32 value)
+{
+	AT24CXX_WriteLenByte(10, value, 4);
 }
 

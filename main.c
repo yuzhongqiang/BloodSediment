@@ -44,24 +44,24 @@ int main(void)
 	//printer_init(9600);
 
 	/* Card-reader initializing (UART2) */
-	//reader_init(9600);
+	reader_init(9600);
 
 	/* LCD initializing (UART1) */
-	//console_init(9600);
+	console_init(9600);
 
 	/* PC communication initializing (UART4)
 	comm_init(9600);
 	*/
-	
+
+
 	storage_init();
 	while (1) {
-		
-		delay_ms(1);
+		delay_ms(100);
 	}
 
+#if 0
 	while (1)
-	{
-#if 1
+	{	   
 		g_cmd = console_recv_cmd();
 		switch (g_cmd)
 		{
@@ -73,33 +73,9 @@ int main(void)
 			break;			
 		default:
 			break;
-		}
-#endif
-
+		}  
 		//printer_main();
 		delay_ms(200);
 	}	 
+#endif
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

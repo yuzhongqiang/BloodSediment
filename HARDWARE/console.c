@@ -9,6 +9,7 @@
 #include "sys.h"
 #include "console.h"
 #include "channel.h"
+#include "storage.h"
 
 /* Console command format 
 Total length:8bytes
@@ -45,6 +46,10 @@ u8 g_console_curstat = CONSOLE_STAT_INIT;
 
 u8 _console_parse(void)
 {
+	u32 remain = 0;
+	char str[64];
+
+	memset(str, 0, sizeof(64));
 	switch (g_console_rxbuf[2])
 	{
 	case 0:
@@ -69,11 +74,15 @@ u8 _console_parse(void)
 	case 2:  // manage page
 		if (0x01 == g_console_rxbuf[3])  /* Query remain */
 		{
-			// Query
+			remain = storage_query();
+			sprintf(str, "mng_lbl_remain.text=%d\n", remain);
+			console_send_str(str);
 		}
 		else if (0x02 == g_console_rxbuf[3])  /* Buy license */
 		{
 			// Buy license
+			sprintf(str, "mng_lbl_value.text=剩余次数:%d\n", remain); 
+			storage_save(0x1234);
 		}
 		else if (0x03 == g_console_rxbuf[3])  /* Return to main page */
 		{
@@ -166,4 +175,22 @@ u8 console_recv_cmd(void)
 {
 	return g_console_curstat;
 }
+
+u8 console_send_ch(u8 ch)
+{
+	while ((USART1->SR & 0x40) == 0)	//等待总线空闲
+		;
+
+	USART1->DR = ch;      
+	return ch;
+}
+
+/* str必须以\0字符结尾 */
+void console_send_str(u8* str)
+{
+ 	while (*str)
+		console_send_ch(*str++);
+}
+
+
 
