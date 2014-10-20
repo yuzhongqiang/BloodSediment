@@ -268,25 +268,15 @@ void AT24CXX_Write(u16 WriteAddr,u8 *pBuffer,u16 NumToWrite)
                                      Storage Routines
 ************************************************************/
 
-void storage_init(void)
-{
-	AT24CXX_Init();
-}
-
-void storage_read(void)
-{
-
-}
-
-void storage_write(void)
-{
-
-}
-
 /* ²éÑ¯Ê£Óà´ÎÊý
 	Ê£Óà´ÎÊý´æ·ÅÔÚeepromµÄµÚ10£,11×Ö½Ú
 	10×Ö½ÚÊÇ¸ßÎ»£¬11×Ö½ÚÊÇµÍÎ»  
 */
+void storage_init(void)
+{
+ 	AT24CXX_Init();
+}
+
 u16 storage_query(void)
 {
 	return AT24CXX_ReadLenByte(10, 4);
@@ -295,5 +285,13 @@ u16 storage_query(void)
 void storage_save(u32 value)
 {
 	AT24CXX_WriteLenByte(10, value, 4);
+}
+
+u16 storage_dec(void)
+{
+	u16 remain;
+	
+	remain = storage_query();
+	storage_save(remain-1);
 }
 

@@ -9,7 +9,7 @@ void reader_init(u32);
 void reader_recv(u32 time);
 void reader_handle(void);
 
-
+u16 reader_main(void);
 
 
 #endif /* __READER_H */

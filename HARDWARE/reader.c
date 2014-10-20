@@ -10,6 +10,14 @@
 #include "reader.h"
 #include "delay.h"
 
+struct _card_info {
+	u8 	present;
+	u8  cardno[4];
+	u8  type[2];
+	u16 value;
+	u8 status;
+} card_info;
+
 /* IC Reader uses USART2 */
 
 /* 存放充值数据的快号 */
@@ -29,7 +37,36 @@ void USART2_IRQHandler(void)
 		res = USART2->DR; 
 		g_reader_rxbuf[g_reader_rxcnt] = res;
 		g_reader_rxcnt++;
-	}  											 
+	}  	
+
+	if ((g_reader_rxbuf[0] == 0x7f)&& (g_reader_rxcnt == g_reader_rxbuf[1]+2)
+		&& (g_reader_rxbuf[1] >= 2) && g_reader_rxcnt > 0)
+	{
+		switch (g_reader_rxbuf[2])
+		{
+			case 0x10:   //一键读卡
+				card_info.present = 1;
+				card_info.status = g_reader_rxbuf[3];
+				card_info.type[0] = g_reader_rxbuf[4];
+				card_info.type[1] = g_reader_rxbuf[5];
+				card_info.cardno[0] = g_reader_rxbuf[6];
+				card_info.cardno[1] = g_reader_rxbuf[7];
+				card_info.cardno[2] = g_reader_rxbuf[8];
+				card_info.cardno[3] = g_reader_rxbuf[9];
+				break;
+				
+			case 0x12:   //一键充值
+				break;
+				
+			case 0x14:   //一键读块
+				card_info.value = ((g_reader_rxbuf[23] << 8) + g_reader_rxbuf[24]);
+				break;
+				
+			default:
+				break;
+		}
+		g_reader_rxcnt = 0;
+	}
 }
 
 void reader_init(u32 baud)
@@ -124,7 +161,7 @@ void reader_change_cc(u8 block)
 	u8 buf[60];
 	u8 i;
 	
-	u8 tmp_buf[27] = {0x7f, 0x19/*len*/, 0x15/*cmd*/,  block+3/*block7*/,
+	u8 tmp_buf[27] = {0x7f, 0x19/*len*/, 0x15/*cmd*/,  4+3/*block7*/,
 				    	/*keyB*/0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 						/*data-keyA*/0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 						/*data-CC*/0xff, 0x07, 0x80, 0x00,
@@ -185,6 +222,39 @@ void reader_write_value(u16 value)
 }
 
 /* 一键读块
+      command code: 0x10
+
+	返回值:
+		状态（1）
+		卡类型（2）
+		卡号（4）
+*/
+u32 reader_read_cardinfo(u8 block)
+{
+	u8 checksum = 0;	
+	u8 data_len = 0;
+	u8 buf[4];
+	u8 i;
+	
+	u8 tmp_buf[4] = {0x7f, 0x2/*len*/, 0x10/*cmd*/,/*checksum*/};
+	checksum = reader_checksum(tmp_buf, 2, 2);
+	tmp_buf[3] = checksum;
+
+	_adjust_buf(tmp_buf, 4, buf, &data_len);
+	for (i=0; i<data_len; i++)
+	{
+		//等待总线空闲
+		while ((USART2->SR & 0x40) == 0)
+			;
+		USART2->DR = buf[i];   
+	}
+
+	g_reader_rxcnt = 0;
+	reader_recv(4000);	
+}
+
+
+/* 一键读块
       command code: 0x14
       block address:   1byte
 	验证的密钥A（6bytes）
@@ -202,7 +272,7 @@ u32 reader_read_block(u8 block)
 	u8 buf[60];
 	u8 i;
 	
-	u8 tmp_buf[27] = {0x7f, 0x9/*len*/, 0x14/*cmd*/,  block/*block#*/,
+	u8 tmp_buf[27] = {0x7f, 0x9/*len*/, 0x14/*cmd*/,  4/*block#*/,
 				    	/*keyA*/0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 						/*checksum*/};
 	checksum = reader_checksum(tmp_buf, 2, 24);
@@ -218,9 +288,7 @@ u32 reader_read_block(u8 block)
 	}
 
 	g_reader_rxcnt = 0;
-	reader_recv(4000);
-
-	
+	reader_recv(10000);	
 }	
 
 /* Start recieve for $time ms */
@@ -246,4 +314,12 @@ void reader_send_cmd(u8 *cmd, u8 len)
 	}
 }
 
+u16 reader_main(void)
+{
+	if (card_info.present == 0)
+		return 0;
+
+	reader_read_block(4);
+	//reader_write_value(value);
+}
 

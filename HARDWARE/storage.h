@@ -25,9 +25,10 @@
 #define EE_TYPE AT24C02
 					  
 void storage_init(void);
-void storage_read(void);
-void storage_write(void);
 u16 storage_query(void);
+void storage_save(u32 value);
+u16 storage_dec(void);
+
 
 #endif
 
