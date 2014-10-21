@@ -10,13 +10,7 @@
 #include "reader.h"
 #include "delay.h"
 
-struct _card_info {
-	u8 	present;
-	u8  cardno[4];
-	u8  type[2];
-	u16 value;
-	u8 status;
-} card_info;
+struct _card_info card_info;
 
 /* IC Reader uses USART2 */
 
@@ -179,8 +173,8 @@ void reader_change_cc(u8 block)
 		USART2->DR = buf[i];   
 	}
 
-	g_reader_rxcnt = 0;
-	reader_recv(4000);
+	//g_reader_rxcnt = 0;
+	//reader_recv(4000);
 	
 }
 
@@ -229,7 +223,7 @@ void reader_write_value(u16 value)
 		¿¨ÀàĞÍ£¨2£©
 		¿¨ºÅ£¨4£©
 */
-u32 reader_read_cardinfo(u8 block)
+u32 reader_read_cardinfo(void)
 {
 	u8 checksum = 0;	
 	u8 data_len = 0;
@@ -237,7 +231,7 @@ u32 reader_read_cardinfo(u8 block)
 	u8 i;
 	
 	u8 tmp_buf[4] = {0x7f, 0x2/*len*/, 0x10/*cmd*/,/*checksum*/};
-	checksum = reader_checksum(tmp_buf, 2, 2);
+	checksum = reader_checksum(tmp_buf, 1, 2);
 	tmp_buf[3] = checksum;
 
 	_adjust_buf(tmp_buf, 4, buf, &data_len);
@@ -249,8 +243,8 @@ u32 reader_read_cardinfo(u8 block)
 		USART2->DR = buf[i];   
 	}
 
-	g_reader_rxcnt = 0;
-	reader_recv(4000);	
+	//g_reader_rxcnt = 0;
+	//reader_recv(4000);	
 }
 
 
@@ -316,10 +310,14 @@ void reader_send_cmd(u8 *cmd, u8 len)
 
 u16 reader_main(void)
 {
-	if (card_info.present == 0)
-		return 0;
+	while (card_info.present == 0)
+	{
+		delay_ms(200);
+	}
 
-	reader_read_block(4);
+	reader_read_cardinfo();
+	//reader_change_cc(7);
+	//reader_read_block(4);
 	//reader_write_value(value);
 }
 

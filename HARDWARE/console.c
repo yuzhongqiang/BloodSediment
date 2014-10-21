@@ -10,6 +10,7 @@
 #include "console.h"
 #include "channel.h"
 #include "storage.h"
+#include "reader.h"
 
 /* Console command format 
 Total length:8bytes
@@ -29,6 +30,9 @@ For example:
 This is the run command in page 1
 */
 
+extern struct _card_info card_info;
+extern u8 g_reader_rxbuf[64];     //接收缓冲,最大64个字节.
+extern u8 g_reader_rxcnt;
 
 /* 串口2中断服务程序
    注意,读取USARTx->SR能避免莫名其妙的错误
@@ -81,7 +85,16 @@ u8 _console_parse(void)
 		else if (0x02 == g_console_rxbuf[3])  /* Buy license */
 		{
 			// Buy license
-			reader_main();
+			g_reader_rxcnt = 0;
+			//while (card_info.present == 0)
+			{
+				delay_ms(200);
+			}
+
+			reader_read_cardinfo();
+			//reader_change_cc(7);
+			//reader_read_block(4);
+			//reader_write_value(value);
 		}
 		else if (0x03 == g_console_rxbuf[3])  /* Return to main page */
 		{
