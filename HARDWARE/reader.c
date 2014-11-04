@@ -22,10 +22,25 @@ struct _card_info card_info;
 */   	
 u8 g_reader_rxbuf[64];     //½ÓÊÕ»º³å,×î´ó64¸ö×Ö½Ú.
 u8 g_reader_rxcnt = 0;
-  
+
+void _reader_enable_intr(void)
+{
+	g_reader_rxcnt = 0;
+	USART2->CR1 |= (1 << 8);    //PEÖÐ¶ÏÊ¹ÄÜ
+	USART2->CR1 |= (1 << 5);    //½ÓÊÕ»º³åÇø·Ç¿ÕÖÐ¶ÏÊ¹Ä
+}
+
+void _reader_disable_intr(void)
+{
+	USART2->CR1 &= ~(1 << 8);    //PEÖÐ¶ÏÊ¹ÄÜ
+	USART2->CR1 &= ~(1 << 5);    //½ÓÊÕ»º³åÇø·Ç¿ÕÖÐ¶ÏÊ¹Ä
+}
+
 void USART2_IRQHandler(void)
 {
-	u8 res;	    
+	u8 res;	
+	u8 i;
+	
 	if (USART2->SR & (1<<5))//½ÓÊÕµ½Êý¾Ý
 	{	 
 		res = USART2->DR; 
@@ -33,27 +48,21 @@ void USART2_IRQHandler(void)
 		g_reader_rxcnt++;
 	}  	
 
-	if ((g_reader_rxbuf[0] == 0x7f)&& (g_reader_rxcnt == g_reader_rxbuf[1]+2)
-		&& (g_reader_rxbuf[1] >= 2) && g_reader_rxcnt > 0)
+	if ((g_reader_rxbuf[g_reader_rxbuf[0]-1] == 0x03 )&& (g_reader_rxcnt > 0)
+		&& (g_reader_rxbuf[0] == g_reader_rxcnt))
 	{
-		switch (g_reader_rxbuf[2])
+		switch (g_reader_rxbuf[1])
 		{
-			case 0x10:   //Ò»¼ü¶Á¿¨
+			case 0x01:   //Card info
 				card_info.present = 1;
-				card_info.status = g_reader_rxbuf[3];
-				card_info.type[0] = g_reader_rxbuf[4];
-				card_info.type[1] = g_reader_rxbuf[5];
-				card_info.cardno[0] = g_reader_rxbuf[6];
-				card_info.cardno[1] = g_reader_rxbuf[7];
-				card_info.cardno[2] = g_reader_rxbuf[8];
-				card_info.cardno[3] = g_reader_rxbuf[9];
+				card_info.status = g_reader_rxbuf[2];
 				break;
 				
-			case 0x12:   //Ò»¼ü³äÖµ
+			case 0x03:   //Ò»¼ü³äÖµ
 				break;
 				
-			case 0x14:   //Ò»¼ü¶Á¿é
-				card_info.value = ((g_reader_rxbuf[23] << 8) + g_reader_rxbuf[24]);
+			case 0x02:   //Ò»¼ü¶Á¿é
+				card_info.value = ((g_reader_rxbuf[4] << 8) + g_reader_rxbuf[5]);
 				break;
 				
 			default:
@@ -86,8 +95,8 @@ void reader_init(u32 baud)
 	USART2->CR1 |= 0X200C;  //1Î»Í£Ö¹,ÎÞÐ£ÑéÎ».
 
 	//Ê¹ÄÜ½ÓÊÕÖÐ¶Ï
-	USART2->CR1 |= (1 << 8);    //PEÖÐ¶ÏÊ¹ÄÜ
-	USART2->CR1 |= (1 << 5);    //½ÓÊÕ»º³åÇø·Ç¿ÕÖÐ¶ÏÊ¹ÄÜ	    	
+	//USART2->CR1 |= (1 << 8);    //PEÖÐ¶ÏÊ¹ÄÜ
+	//USART2->CR1 |= (1 << 5);    //½ÓÊÕ»º³åÇø·Ç¿ÕÖÐ¶ÏÊ¹ÄÜ	    	
 	nvic_init(3, 3, USART2_IRQChannel, 2);//×é2£¬×îµÍÓÅÏÈ¼¶ 
 }
 
@@ -100,12 +109,79 @@ static u8 _send_byte(u8 ch)
 	return ch;
 }
 
-void reader_send_str(u8* str)
+void reader_send_bytes(u8* str, u8 len)
 {
-	while (*str)
-		_send_byte(*str++);
+	u8 i;
+	for (i=0; i<len; i++)
+		_send_byte(str[i]);
 }
 
+static u8 reader_fill_checksum(u8* buf, u8 len)
+{
+	u8 temp = 0, i;
+	
+	for (i = 0; i < len - 2; i++)
+	{
+		temp ^= buf[i];
+	}
+	buf[len-2] = ~temp; 
+
+	return ~temp;
+}
+
+/*
+[FrameLen]	[SEQ/CmdType]	[Cmd/Status]	[Length]	[Info] 	[BCC]	[ETX]
+1byte          	1byte   			1byte  			1byte  	N bytes  1byte  	1byte
+*/
+void reader_get_cardinfo(void)
+{
+	//u8 buf[6] = {0x06, 0x01, 0x41, 0x00, 0xB9/*checksum*/, 0x03};  //for test
+	u8 buf[6] = {0x06, 0x01, 0x41, 0x00, 0x00/*checksum*/, 0x03};
+	reader_fill_checksum(buf, 6);
+	_reader_enable_intr();
+	reader_send_bytes(buf, sizeof(buf));
+	//delay_ms(1000);
+}
+
+void reader_close_card(void)
+{
+	u8 buf[6] = {0x06, 0x02, 0x44, 0x00, 0x00, 0x03};
+	reader_fill_checksum(buf, 6);
+	_reader_enable_intr();
+	reader_send_bytes(buf, sizeof(buf));
+	delay_ms(1000);
+}
+
+u16 reader_read_block(u8 blk)
+{
+	u8 buf[15] = {0x0F, 0x02, 0x52, 0x09, 0x00/*blkno*/, 0x01, 0x60/*use keyA*/, 
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x03};
+	buf[4] = blk;
+	reader_fill_checksum(buf, 15);
+	_reader_enable_intr();
+	reader_send_bytes(buf, sizeof(buf));
+	//delay_ms(1000);
+	//_reader_disable_intr();
+}
+
+void reader_write_block(u8 blk, u16 value)
+{
+	u8 buf[31] = {0x1F, 0x02, 0x57,
+		0x19, 0x00/*blkno*/, 0x01, 0x60/*keyA*/, 
+		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x03};
+	buf[4] = blk;
+	buf[13] = (u8)((value & 0xff00) >> 8);
+	buf[14] = (u8)(value & 0x00ff);
+	reader_fill_checksum(buf, sizeof(buf));
+	_reader_enable_intr();
+	reader_send_bytes(buf, sizeof(buf));
+	//delay_ms(1000);
+}
+
+#if 0
 static u8 reader_checksum(u8* data, u8 offset, u8 len)
 {
 	u8 temp = 0, i;
@@ -284,6 +360,7 @@ u32 reader_read_block(u8 block)
 	g_reader_rxcnt = 0;
 	reader_recv(10000);	
 }	
+#endif
 
 /* Start recieve for $time ms */
 void reader_recv(u32 time)
@@ -315,7 +392,7 @@ u16 reader_main(void)
 		delay_ms(200);
 	}
 
-	reader_read_cardinfo();
+	reader_get_cardinfo();
 	//reader_change_cc(7);
 	//reader_read_block(4);
 	//reader_write_value(value);

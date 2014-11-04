@@ -86,15 +86,9 @@ u8 _console_parse(void)
 		{
 			// Buy license
 			g_reader_rxcnt = 0;
-			//while (card_info.present == 0)
-			{
-				delay_ms(200);
-			}
-
-			reader_read_cardinfo();
-			//reader_change_cc(7);
-			//reader_read_block(4);
-			//reader_write_value(value);
+			//reader_write_block(1, 0xabcd);
+			reader_read_block(1);
+			//reader_get_cardinfo();
 		}
 		else if (0x03 == g_console_rxbuf[3])  /* Return to main page */
 		{

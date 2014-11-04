@@ -31,17 +31,17 @@ int main(void)
 	key_init();
 	*/
 	
-	//channel_init();
-	//channel_init_for_debug();
-	//motor_init();
+	/////channel_init();
+	channel_init_for_debug();
+	motor_init();
 	
-	delay_ms(500);
+	delay_ms(200);
 	
 	/* LEDs initializing */
 	//led_init();
 
 	/* Printer initializing (UART3) */
-	//printer_init(9600);
+	printer_init(9600);
 
 	/* Card-reader initializing (UART2) */
 	reader_init(9600);
@@ -51,15 +51,11 @@ int main(void)
 
 	/* PC communication initializing (UART4)
 	comm_init(9600);
-	*/
+	*/ 
 
-
+	/* EEPROM init */
 	storage_init();
-	while (1) {
-		delay_ms(100);
-	}
 
-#if 0
 	while (1)
 	{	   
 		g_cmd = console_recv_cmd();
@@ -75,7 +71,6 @@ int main(void)
 			break;
 		}  
 		//printer_main();
-		delay_ms(200);
+		delay_ms(300);
 	}	 
-#endif
 }

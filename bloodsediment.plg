@@ -4,8 +4,284 @@
 <h1>µVision3 Build Log</h1>
 <h2>Project:</h2>
 D:\Blood\bloodsediment\bloodsediment.uv2
-Project File Date:  10/20/2014
+Project File Date:  11/05/2014
 
 <h2>Output:</h2>
+Build target 'Target 1'
+assembling STM32F10x.s...
+compiling main.c...
+compiling delay.c...
+compiling key.c...
+compiling led.c...
+compiling sys.c...
+compiling comm.c...
+compiling printer.c...
+compiling reader.c...
+HARDWARE\reader.c(42): warning:  #177-D: variable "i" was declared but never referenced
+HARDWARE\reader.c(165): warning:  #940-D: missing return statement at end of non-void function "reader_read_block"
+HARDWARE\reader.c(399): warning:  #940-D: missing return statement at end of non-void function "reader_main"
+compiling rtc.c...
+compiling channel.c...
+HARDWARE\channel.c(185): warning:  #177-D: variable "j" was declared but never referenced
+HARDWARE\channel.c(242): warning:  #177-D: variable "j" was declared but never referenced
+HARDWARE\channel.c(240): warning:  #177-D: function "channel_check_all_for_debug" was declared but never referenced
+compiling motor.c...
+HARDWARE\motor.c(285): warning:  #177-D: function "_fn_motor0_reset_position" was declared but never referenced
+HARDWARE\motor.c(297): warning:  #177-D: function "_fn_motor1_reset_position" was declared but never referenced
+HARDWARE\motor.c(305): warning:  #177-D: function "_fn_motor2_reset_position" was declared but never referenced
+compiling console.c...
+HARDWARE\console.c(56): warning:  #223-D: function "memset" declared implicitly
+HARDWARE\console.c(82): warning:  #223-D: function "sprintf" declared implicitly
+HARDWARE\console.c(83): warning:  #167-D: argument of type "char *" is incompatible with parameter of type "u8 *"
+compiling storage.c...
+HARDWARE\storage.c(296): warning:  #940-D: missing return statement at end of non-void function "storage_dec"
+linking...
+Program Size: Code=11318 RO-data=330 RW-data=84 ZI-data=1972  
+FromELF: creating hex file...
+"bloodsediment.axf" - 0 Error(s), 13 Warning(s).
+Load "D:\\Blood\\bloodsediment\\bloodsediment.AXF" 
+
+JLink info:
+-----------
+DLL: V4.08b, compiled Jun 30 2009 19:10:31
+Firmware: J-Link ARM V8 compiled Dec  1 2009 11:42:48
+Hardware: V8.00
+S/N : 20100213 
+Feature(s) : RDI,FlashDL,FlashBP,JFlash,GDBFULL 
+---
+* JLink Info: Found SWD-DP with ID 0x1BA01477
+* JLink Info: TPIU fitted.
+* JLink Info: ETM fitted.
+* JLink Info:   FPUnit: 6 code (BP) slots and 2 literal slots
+
+Target info:
+------------
+Device: STM32F103RC
+VTarget = 3.138V
+State of Pins: 
+TCK: 0, TDI: 1, TDO: 1, TMS: 0, TRES: 1, TRST: 1
+* JLink Info: Found SWD-DP with ID 0x1BA01477
+* JLink Info: TPIU fitted.
+* JLink Info: ETM fitted.
+* JLink Info:   FPUnit: 6 code (BP) slots and 2 literal slots
+Hardware-Breakpoints: 6
+Software-Breakpoints: 2048
+Watchpoints:          4
+JTAG speed: 9600 kHz
+---
+* JLink Info: Found SWD-DP with ID 0x1BA01477
+* JLink Info: TPIU fitted.
+* JLink Info: ETM fitted.
+* JLink Info:   FPUnit: 6 code (BP) slots and 2 literal slots
+Erase Done.
+Programming Done.
+Verify OK.
+Build target 'Target 1'
+assembling STM32F10x.s...
+compiling main.c...
+compiling delay.c...
+compiling key.c...
+compiling led.c...
+compiling sys.c...
+compiling comm.c...
+compiling printer.c...
+compiling reader.c...
+HARDWARE\reader.c(42): warning:  #177-D: variable "i" was declared but never referenced
+HARDWARE\reader.c(165): warning:  #940-D: missing return statement at end of non-void function "reader_read_block"
+HARDWARE\reader.c(399): warning:  #940-D: missing return statement at end of non-void function "reader_main"
+compiling rtc.c...
+compiling channel.c...
+HARDWARE\channel.c(185): warning:  #177-D: variable "j" was declared but never referenced
+HARDWARE\channel.c(242): warning:  #177-D: variable "j" was declared but never referenced
+HARDWARE\channel.c(240): warning:  #177-D: function "channel_check_all_for_debug" was declared but never referenced
+compiling motor.c...
+HARDWARE\motor.c(285): warning:  #177-D: function "_fn_motor0_reset_position" was declared but never referenced
+HARDWARE\motor.c(297): warning:  #177-D: function "_fn_motor1_reset_position" was declared but never referenced
+HARDWARE\motor.c(305): warning:  #177-D: function "_fn_motor2_reset_position" was declared but never referenced
+compiling console.c...
+HARDWARE\console.c(56): warning:  #223-D: function "memset" declared implicitly
+HARDWARE\console.c(82): warning:  #223-D: function "sprintf" declared implicitly
+HARDWARE\console.c(83): warning:  #167-D: argument of type "char *" is incompatible with parameter of type "u8 *"
+compiling storage.c...
+HARDWARE\storage.c(296): warning:  #940-D: missing return statement at end of non-void function "storage_dec"
+linking...
+Program Size: Code=11314 RO-data=330 RW-data=84 ZI-data=1972  
+FromELF: creating hex file...
+"bloodsediment.axf" - 0 Error(s), 13 Warning(s).
+Load "D:\\Blood\\bloodsediment\\bloodsediment.AXF" 
+
+JLink info:
+-----------
+DLL: V4.08b, compiled Jun 30 2009 19:10:31
+Firmware: J-Link ARM V8 compiled Dec  1 2009 11:42:48
+Hardware: V8.00
+S/N : 20100213 
+Feature(s) : RDI,FlashDL,FlashBP,JFlash,GDBFULL 
+---
+* JLink Info: Found SWD-DP with ID 0x1BA01477
+* JLink Info: TPIU fitted.
+* JLink Info: ETM fitted.
+* JLink Info:   FPUnit: 6 code (BP) slots and 2 literal slots
+
+Target info:
+------------
+Device: STM32F103RC
+VTarget = 3.144V
+State of Pins: 
+TCK: 0, TDI: 1, TDO: 1, TMS: 0, TRES: 1, TRST: 1
+* JLink Info: Found SWD-DP with ID 0x1BA01477
+* JLink Info: TPIU fitted.
+* JLink Info: ETM fitted.
+* JLink Info:   FPUnit: 6 code (BP) slots and 2 literal slots
+Hardware-Breakpoints: 6
+Software-Breakpoints: 2048
+Watchpoints:          4
+JTAG speed: 9600 kHz
+---
+* JLink Info: Found SWD-DP with ID 0x1BA01477
+* JLink Info: TPIU fitted.
+* JLink Info: ETM fitted.
+* JLink Info:   FPUnit: 6 code (BP) slots and 2 literal slots
+Erase Done.
+Programming Done.
+Verify OK.
+Build target 'Target 1'
+assembling STM32F10x.s...
+compiling main.c...
+compiling delay.c...
+compiling key.c...
+compiling led.c...
+compiling sys.c...
+compiling comm.c...
+compiling printer.c...
+compiling reader.c...
+HARDWARE\reader.c(42): warning:  #177-D: variable "i" was declared but never referenced
+HARDWARE\reader.c(165): warning:  #940-D: missing return statement at end of non-void function "reader_read_block"
+HARDWARE\reader.c(399): warning:  #940-D: missing return statement at end of non-void function "reader_main"
+compiling rtc.c...
+compiling channel.c...
+HARDWARE\channel.c(185): warning:  #177-D: variable "j" was declared but never referenced
+HARDWARE\channel.c(242): warning:  #177-D: variable "j" was declared but never referenced
+HARDWARE\channel.c(240): warning:  #177-D: function "channel_check_all_for_debug" was declared but never referenced
+compiling motor.c...
+HARDWARE\motor.c(285): warning:  #177-D: function "_fn_motor0_reset_position" was declared but never referenced
+HARDWARE\motor.c(297): warning:  #177-D: function "_fn_motor1_reset_position" was declared but never referenced
+HARDWARE\motor.c(305): warning:  #177-D: function "_fn_motor2_reset_position" was declared but never referenced
+compiling console.c...
+HARDWARE\console.c(56): warning:  #223-D: function "memset" declared implicitly
+HARDWARE\console.c(82): warning:  #223-D: function "sprintf" declared implicitly
+HARDWARE\console.c(83): warning:  #167-D: argument of type "char *" is incompatible with parameter of type "u8 *"
+compiling storage.c...
+HARDWARE\storage.c(296): warning:  #940-D: missing return statement at end of non-void function "storage_dec"
+linking...
+Program Size: Code=11318 RO-data=330 RW-data=84 ZI-data=1972  
+FromELF: creating hex file...
+"bloodsediment.axf" - 0 Error(s), 13 Warning(s).
+Load "D:\\Blood\\bloodsediment\\bloodsediment.AXF" 
+
+JLink info:
+-----------
+DLL: V4.08b, compiled Jun 30 2009 19:10:31
+Firmware: J-Link ARM V8 compiled Dec  1 2009 11:42:48
+Hardware: V8.00
+S/N : 20100213 
+Feature(s) : RDI,FlashDL,FlashBP,JFlash,GDBFULL 
+---
+* JLink Info: Found SWD-DP with ID 0x1BA01477
+* JLink Info: TPIU fitted.
+* JLink Info: ETM fitted.
+* JLink Info:   FPUnit: 6 code (BP) slots and 2 literal slots
+
+Target info:
+------------
+Device: STM32F103RC
+VTarget = 3.144V
+State of Pins: 
+TCK: 0, TDI: 1, TDO: 1, TMS: 0, TRES: 1, TRST: 1
+* JLink Info: Found SWD-DP with ID 0x1BA01477
+* JLink Info: TPIU fitted.
+* JLink Info: ETM fitted.
+* JLink Info:   FPUnit: 6 code (BP) slots and 2 literal slots
+Hardware-Breakpoints: 6
+Software-Breakpoints: 2048
+Watchpoints:          4
+JTAG speed: 9600 kHz
+---
+* JLink Info: Found SWD-DP with ID 0x1BA01477
+* JLink Info: TPIU fitted.
+* JLink Info: ETM fitted.
+* JLink Info:   FPUnit: 6 code (BP) slots and 2 literal slots
+Erase Done.
+Programming Done.
+Verify OK.
+Build target 'Target 1'
+assembling STM32F10x.s...
+compiling main.c...
+compiling delay.c...
+compiling key.c...
+compiling led.c...
+compiling sys.c...
+compiling comm.c...
+compiling printer.c...
+compiling reader.c...
+HARDWARE\reader.c(42): warning:  #177-D: variable "i" was declared but never referenced
+HARDWARE\reader.c(165): warning:  #940-D: missing return statement at end of non-void function "reader_read_block"
+HARDWARE\reader.c(399): warning:  #940-D: missing return statement at end of non-void function "reader_main"
+compiling rtc.c...
+compiling channel.c...
+HARDWARE\channel.c(185): warning:  #177-D: variable "j" was declared but never referenced
+HARDWARE\channel.c(242): warning:  #177-D: variable "j" was declared but never referenced
+HARDWARE\channel.c(240): warning:  #177-D: function "channel_check_all_for_debug" was declared but never referenced
+compiling motor.c...
+HARDWARE\motor.c(285): warning:  #177-D: function "_fn_motor0_reset_position" was declared but never referenced
+HARDWARE\motor.c(297): warning:  #177-D: function "_fn_motor1_reset_position" was declared but never referenced
+HARDWARE\motor.c(305): warning:  #177-D: function "_fn_motor2_reset_position" was declared but never referenced
+compiling console.c...
+HARDWARE\console.c(56): warning:  #223-D: function "memset" declared implicitly
+HARDWARE\console.c(82): warning:  #223-D: function "sprintf" declared implicitly
+HARDWARE\console.c(83): warning:  #167-D: argument of type "char *" is incompatible with parameter of type "u8 *"
+compiling storage.c...
+HARDWARE\storage.c(296): warning:  #940-D: missing return statement at end of non-void function "storage_dec"
+linking...
+Program Size: Code=11314 RO-data=330 RW-data=84 ZI-data=1972  
+FromELF: creating hex file...
+"bloodsediment.axf" - 0 Error(s), 13 Warning(s).
+Load "D:\\Blood\\bloodsediment\\bloodsediment.AXF" 
+
+JLink info:
+-----------
+DLL: V4.08b, compiled Jun 30 2009 19:10:31
+Firmware: J-Link ARM V8 compiled Dec  1 2009 11:42:48
+Hardware: V8.00
+S/N : 20100213 
+Feature(s) : RDI,FlashDL,FlashBP,JFlash,GDBFULL 
+---
+* JLink Info: Found SWD-DP with ID 0x1BA01477
+* JLink Info: TPIU fitted.
+* JLink Info: ETM fitted.
+* JLink Info:   FPUnit: 6 code (BP) slots and 2 literal slots
+
+Target info:
+------------
+Device: STM32F103RC
+VTarget = 3.144V
+State of Pins: 
+TCK: 0, TDI: 1, TDO: 1, TMS: 0, TRES: 1, TRST: 1
+* JLink Info: Found SWD-DP with ID 0x1BA01477
+* JLink Info: TPIU fitted.
+* JLink Info: ETM fitted.
+* JLink Info:   FPUnit: 6 code (BP) slots and 2 literal slots
+Hardware-Breakpoints: 6
+Software-Breakpoints: 2048
+Watchpoints:          4
+JTAG speed: 9600 kHz
+---
+* JLink Info: Found SWD-DP with ID 0x1BA01477
+* JLink Info: TPIU fitted.
+* JLink Info: ETM fitted.
+* JLink Info:   FPUnit: 6 code (BP) slots and 2 literal slots
+Erase Done.
+Programming Done.
+Verify OK.
 Clean started: Project: 'bloodsediment'
    deleting intermediate output files for target 'Target 1'

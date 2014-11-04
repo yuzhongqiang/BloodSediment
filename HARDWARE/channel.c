@@ -15,7 +15,6 @@ struct tube tubes[MAX_CHANNELS];
      0xff: reset position
 */
 u8 g_cur_chn = 0xff;   
-u8 g_prev_chn = 0xff;
 extern u8 g_scan_stage;
 
 /* ‘›Õ£±Í÷æ*/
@@ -304,7 +303,6 @@ static u8 channel_select_current(void)
 {
 	u8 i;
 
-	g_prev_chn = g_cur_chn;
 	for (i=0; i<MAX_CHANNELS; i++)
 	{		
 		if (!tubes[i].inplace)

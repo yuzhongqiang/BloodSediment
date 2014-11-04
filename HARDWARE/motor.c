@@ -56,6 +56,11 @@ u32 g_docking[10] = {
 	POS0 + 8 * POS_INTV,
 	POS0 + 9 * POS_INTV
 };
+/*
+	0xff: Reset position
+	0 ~ 9: Working position
+*/
+u8 g_motor1_pos = 0xff;  
 
 //定时器3中断服务程序	 
 void TIM3_IRQHandler(void)
@@ -206,6 +211,25 @@ void motor_move_steps_blocked(u8 motor_id, u8 dir, u32 steps)
 	while (g_demand_steps > 0)
 		;
 	_motor_stop(motor_id);
+}
+
+void motor2_shake(u32 steps)
+{
+	u8 i;
+
+	for (i=0; i<3; i++)
+	{
+		g_timer_fn = _fn_motor_move_steps;
+		g_demand_steps = steps;
+		_motor_set_dir(1);
+		_motor_startup(2);	
+
+		/* blocking ... */
+		while (g_demand_steps > 0)
+			;
+		delay_ms(500);
+		motor_reset_position_blocked(2);
+	}
 }
 
 /**************************************************************
@@ -368,7 +392,6 @@ void motor_reset_position(u8 motor_id)
 
 extern struct tube tubes[MAX_CHANNELS];
 extern u8 g_cur_chn;
-extern u8 g_prev_chn;
 extern u8 channel_is_opaque(u8 chn);
 
 static u8 _fn_motor0_scan_chn(void)
@@ -405,39 +428,33 @@ void motor_scan_chn(u8 motor_id, u8 chn_id)
 	u8 dir;
 	u32 steps;
 
-	/* motor1 reach to resetting place */
-	if (g_prev_chn == 0xff)
-	{
-		steps = g_docking[g_cur_chn];
-		dir = MOTOR0_DIR_FWD;
-	}
-	else if (g_cur_chn > g_prev_chn)
-	{
-		steps = g_docking[g_cur_chn] - g_docking[g_prev_chn];
-		dir = MOTOR0_DIR_FWD;
-	}
-	else
-	{
-		steps = g_docking[g_prev_chn] - g_docking[g_cur_chn];
-		dir = MOTOR0_DIR_BWD;
-	}
-	motor_move_steps_blocked(1, dir, steps);
-
 	/* do shaking when scan the first time */
-#if 1
 	if (tubes[g_cur_chn].remains == MAX_MEASURE_TIMES)
 	{
-		motor_move_steps_blocked(2, 1, 15);
-		motor_reset_position_blocked(2);
-		motor_move_steps_blocked(2, 1, 15);
-		motor_reset_position_blocked(2);
-		motor_move_steps_blocked(2, 1, 15);
-		motor_reset_position_blocked(2);
-	}
-#endif
+		/* motor1 reach to resetting place */
+		if (g_motor1_pos == 0xff)
+		{
+			steps = g_docking[g_cur_chn];
+			dir = MOTOR0_DIR_FWD;
+		}
+		else if (g_cur_chn > g_motor1_pos)
+		{
+			steps = g_docking[g_cur_chn] - g_docking[g_motor1_pos];
+			dir = MOTOR0_DIR_FWD;
+		}
+		else
+		{
+			steps = g_docking[g_motor1_pos] - g_docking[g_cur_chn];
+			dir = MOTOR0_DIR_BWD;
+		}
+		motor_move_steps_blocked(1, dir, steps);
+		delay_ms(10);		
+		motor2_shake(21);
 
-	/* start schan ... */
-	
+		g_motor1_pos = g_cur_chn;
+	}
+
+	/* start schan ... */	
 	g_scan_stage = SCAN_STAGE_SCANNING;
 	g_timer_fn = _fn_motor0_scan_chn;
 	tubes[chn_id].scan_times[13 - tubes[chn_id].remains] = rtc_get_sec();
@@ -458,6 +475,14 @@ void motor_init(void)
 {
 	_timer_init(7200, 5);
 	delay_ms(10);
+
+	/* 
+	    MT_1(PC0), MT_2(PC1), MT_3(PC2) initialization,
+	*/
+	GPIOC->CRL &= 0xFFFFF000;
+	GPIOC->CRL |= 0x00000333;
+	/* First enable it */
+	GPIOC->ODR |= 0x0007;	
 	
 	/*
 	ENx(PA6), DIRx(PA5), CLKx(PA4)，输出模式 
@@ -467,10 +492,8 @@ void motor_init(void)
 	GPIOA->CRL |= 0x03330000;
 	GPIOA->ODR |= 0x0040;
 
-	/* MT_1(PC0), MT_2(PC1), MT_3(PC2) initialization, disable */
-	GPIOC->CRL &= 0xFFFFF000;
-	GPIOC->CRL |= 0x00000333;
-	GPIOC->ODR &= 0xfff8;	
+	/* Disable MT_1, MT_2, MT_3 */
+	GPIOC->ODR &= 0xfff8;
 
 	/* 配置A_INIT(PB5), B_INIT(PB8), C_INIT(PB9)为上拉/下拉输入模式 */
 	GPIOB->CRL &= 0xFF0FFFFF;
