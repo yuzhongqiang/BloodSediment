@@ -38,16 +38,7 @@ extern struct _card_info card_info;
 extern u8 g_reader_rxbuf[64];     //接收缓冲,最大64个字节.
 extern u8 g_reader_rxcnt;
 
-/* 串口2中断服务程序
-   注意,读取USARTx->SR能避免莫名其妙的错误
-*/   	
-u8 g_console_rxbuf[64];
-u8 g_console_rxcnt = 0;
 
-//接收状态
-#define _STATE_RECIEVING  0
-#define _STATE_0XD_RECVED  1
-u8 g_console_rxstat = _STATE_RECIEVING;
 
 /* 当前接收到的命令*/
 u8 g_console_curstat = CONSOLE_STAT_INIT;
@@ -90,7 +81,7 @@ u8 _console_parse(void)
 		{
 			g_reader_rxcnt = 0;
 			reader_read_block(1);
-			delay_ms(5000);
+			//delay_ms(2000);
 
 			sprintf(str, "mng_lbl_value.text=%d\n", card_info.value);
 			console_send_str((u8*)str);
@@ -107,22 +98,25 @@ u8 _console_parse(void)
 	default:
 		break;
 	}
+	g_console_rxcnt = 0;
+	
 	return 0;
 }
-  
+
+/* 
+    串口2中断服务程序
+    读取USARTx->SR能 避免莫名其妙的错误
+*/   	
 void USART1_IRQHandler(void)
 {
 {
 	u8 res;	 
 	
-	if (USART1->SR & (1<<5))		//接收到数据
-	{	 
+	if (USART1->SR & (1<<5)) {  	//接收到数据
     		res = USART1->DR; 
-		switch (g_console_rxstat)
-		{
+		switch (g_console_rxstat) {
 		case _STATE_RECIEVING:
-			if (0x0d == res)
-			{
+			if (0x0d == res) {
 				g_console_rxbuf[g_console_rxcnt++] = res;
 				g_console_rxstat = _STATE_0XD_RECVED;
 			}
@@ -130,19 +124,16 @@ void USART1_IRQHandler(void)
 				g_console_rxbuf[g_console_rxcnt++] = res;			
 			break;
 		case _STATE_0XD_RECVED:
-			if (res != 0x0A)     //error, restart
-			{
+			if (res != 0x0A)  {     //error, restart
 				g_console_rxcnt = 0;
 				g_console_rxstat = _STATE_RECIEVING;
 			}
-			else
-			{
-			   g_console_rxbuf[g_console_rxcnt++] = res;
-			   if (g_console_rxbuf[0] == 0xf3 && g_console_rxbuf[1] == 0xd7
-			   	&& g_console_rxcnt == 8)
-			   {
-				_console_parse();	
-			   }
+			else 	{   // all recieved
+				   g_console_rxbuf[g_console_rxcnt++] = res;
+				   if (g_console_rxbuf[0] == 0xf3 && g_console_rxbuf[1] == 0xd7
+				   	&& g_console_rxcnt == 8) {
+					g_console_cmd_recieved = 1;	
+				   }
 				g_console_rxcnt = 0;
 				g_console_rxstat = _STATE_RECIEVING;
 			}
@@ -185,8 +176,13 @@ void console_init(u32 baud)
 	nvic_init(3, 3, USART1_IRQChannel, 2);//组2，最低优先级 
 }
 
-u8 console_recv_cmd(void)
+u8 console_main(void)
 {
+	if (g_console_cmd_recieved) {
+		_console_parse();
+		g_console_cmd_recieved = 0;
+	}
+	
 	return g_console_curstat;
 }
 
@@ -205,3 +201,4 @@ void console_send_str(u8* str)
  	while (*str)
 		console_send_ch(*str++);
 } 
+

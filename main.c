@@ -27,8 +27,8 @@ int main(void)
 	rtc_init();
 	rtc_set(1970,1,1,0,0,0);
 
-	channel_init();
-	///channel_init_for_debug();
+	//channel_init();
+	channel_init_for_debug();
 	motor_init();
 	
 	delay_ms(200);
@@ -49,9 +49,11 @@ int main(void)
 	/* EEPROM init */
 	storage_init();	
 
+	//reader_read_block(1);
+
 	delay_ms(1000);	
 	while (1) {	   
-		g_cmd = console_recv_cmd();
+		g_cmd = console_main();
 		switch (g_cmd) {
 		case CONSOLE_STAT_RUNNING:
 		    channel_main();

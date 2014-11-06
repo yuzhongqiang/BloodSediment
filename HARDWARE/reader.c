@@ -34,7 +34,8 @@ void _reader_enable_intr(void)
 void _reader_disable_intr(void)
 {
 	USART2->CR1 &= ~(1 << 8);    //PEÖÐ¶ÏÊ¹ÄÜ
-	USART2->CR1 &= ~(1 << 5);    //½ÓÊÕ»º³åÇø·Ç¿ÕÖÐ¶ÏÊ¹Ä
+	USART2->CR1 &= ~(1 << 5);    //½ÓÊÕ»º³åÇø·Ç¿ÕÖÐ¶ÏÊ¹
+}
 #endif
 
 void USART2_IRQHandler(void)
@@ -157,6 +158,7 @@ u16 reader_read_block(u8 blk)
 	buf[4] = blk;
 	reader_fill_checksum(buf, 15);
 	reader_send_bytes(buf, sizeof(buf));
+	delay_ms(1000);
 	return 0;
 }
 

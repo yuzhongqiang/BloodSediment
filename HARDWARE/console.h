@@ -6,7 +6,7 @@
 #define __CONSOLE_H
 
 void console_init(u32);
-u8 console_recv_cmd(void);
+u8 console_main(void);
 void console_send_str(u8* str);
 
 #endif /* __CONSOLE_H */

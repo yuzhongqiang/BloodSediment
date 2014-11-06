@@ -251,7 +251,7 @@ static void channel_check_all(void)
 #if ESR_DEBUG
 static void channel_check_all_for_debug(void)
 {
-    u8 i, j;
+    u8 i;
     
 	for (i=0; i<MAX_CHANNELS; i++)
 	{
@@ -262,7 +262,7 @@ static void channel_check_all_for_debug(void)
 		switch (i)
 		{
 		case 0:
-			tubes[i].inplace = 0;
+			tubes[i].inplace = 1;
 			break;
 		case 1:
 			tubes[i].inplace = 0;
@@ -278,7 +278,7 @@ static void channel_check_all_for_debug(void)
 			tubes[i].inplace = 0;
 			break;
 		case 5:
-			tubes[i].inplace = 1;
+			tubes[i].inplace = 0;
 			break;
 		case 6:
 			tubes[i].inplace = 0;
@@ -290,7 +290,7 @@ static void channel_check_all_for_debug(void)
 			tubes[i].inplace = 0;
 			break;
 		case 9:
-			tubes[i].inplace = 1;
+			tubes[i].inplace = 0;
 			break;
 #endif
 		}			
@@ -410,7 +410,7 @@ void channel_init_for_debug(void)
 		switch (i)
 		{
 		case 0:
-			tubes[i].inplace = 0;
+			tubes[i].inplace = 1;
 			break;
 		case 1:
 			tubes[i].inplace = 0;
@@ -426,7 +426,7 @@ void channel_init_for_debug(void)
 			tubes[i].inplace = 0;
 			break;
 		case 5:
-			tubes[i].inplace = 1;
+			tubes[i].inplace = 0;
 			break;
 		case 6:
 			tubes[i].inplace = 0;
@@ -438,7 +438,7 @@ void channel_init_for_debug(void)
 			tubes[i].inplace = 0;
 			break;
 		case 9:
-			tubes[i].inplace = 1;
+			tubes[i].inplace = 0;
 			break;
 #endif
 		}
