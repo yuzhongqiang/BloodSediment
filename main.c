@@ -26,20 +26,13 @@ int main(void)
 	/* Real time init */
 	rtc_init();
 	rtc_set(1970,1,1,0,0,0);
-	
-	/* keys initializing
-	key_init();
-	*/
-	
-	/////channel_init();
+
+	channel_init();
 	///channel_init_for_debug();
-	///motor_init();
+	motor_init();
 	
 	delay_ms(200);
 	
-	/* LEDs initializing */
-	//led_init();
-
 	/* Printer initializing (UART3) */
 	printer_init(9600);
 
@@ -56,15 +49,10 @@ int main(void)
 	/* EEPROM init */
 	storage_init();	
 
-	//printer_test();
-	printer_graph();
-	delay_ms(1000);
-
-	while (0)
-	{	   
+	delay_ms(1000);	
+	while (1) {	   
 		g_cmd = console_recv_cmd();
-		switch (g_cmd)
-		{
+		switch (g_cmd) {
 		case CONSOLE_STAT_RUNNING:
 		    channel_main();
 			break;
@@ -73,8 +61,10 @@ int main(void)
 			break;			
 		default:
 			break;
-		}  
-		//printer_main();
+		} 
+		
+		printer_main();
 		delay_ms(300);
 	}	 
 }
+

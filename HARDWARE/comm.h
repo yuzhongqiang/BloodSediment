@@ -7,14 +7,5 @@
 
 void comm_init(u32);
 
-
-
-
-
-
-
-
-
-
-
 #endif /* __COMM_H */
+

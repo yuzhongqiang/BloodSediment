@@ -1,22 +1,9 @@
 #ifndef __SYS_H
-#define __SYS_H	 
+#define __SYS_H	
+ 
 #include <stm32f10x_lib.h>
-//////////////////////////////////////////////////////////////////////////////////	 
-//本程序只供学习使用，未经作者许可，不得用于其它任何用途
-//Mini STM32开发板
-//系统时钟初始化		   
-//正点原子@ALIENTEK
-//技术论坛:www.openedv.com
-//修改日期:2010/5/27
-//版本：V1.4
-//版权所有，盗版必究。
-//Copyright(C) 正点原子 2009-2019
-//All rights reserved
-//********************************************************************************
-//V1.4修改说明
-//把NVIC KO了,没有使用任何库文件!
-//加入了JTAG_Set函数
-////////////////////////////////////////////////////////////////////////////////// 	  
+	  
+#define ESR_DEBUG 0
 
 //机器架构定义
 //#define SMALL_MACHINE
@@ -47,12 +34,10 @@ typedef u8 (*TIMER_FN)(void);
 
 //系统当前状态
 #define SYS_INITING  1
-#define SYS_
 
 
 ///////////////////////////////////////////////////////////////
 //位带操作,实现51类似的GPIO控制功能
-//具体实现思想,参考<<CM3权威指南>>第五章(87页~92页).
 //IO口操作宏定义
 #define BITBAND(addr, bitnum) ((addr & 0xF0000000)+0x2000000+((addr &0xFFFFF)<<5)+(bitnum<<2)) 
 #define MEM_ADDR(addr)  *((volatile unsigned long  *)(addr)) 
@@ -128,25 +113,13 @@ void sys_init(void);
 void nvic_init(u8 NVIC_PreemptionPriority,u8 NVIC_SubPriority,u8 NVIC_Channel,u8 NVIC_Group);
 void jtag_set(u8 mode);
 
-#endif
-
 /****************************************************************
                                           Console commands
 ****************************************************************/
 #define CONSOLE_STAT_INIT      0
 #define CONSOLE_STAT_RUNNING   1
 #define CONSOLE_STAT_PAUSE     2
-
 #define CONSOLE_STAT_MNG  3
 
-
-
-
-
-
-
-
-
-
-
+#endif   // __SYS_H
 

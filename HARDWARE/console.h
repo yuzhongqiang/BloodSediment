@@ -1,15 +1,13 @@
 /*
-* sensor.h
+* console.h
 */
 
-#ifndef __LCD_H
-#define __LCD_H
+#ifndef __CONSOLE_H
+#define __CONSOLE_H
 
 void console_init(u32);
-
 u8 console_recv_cmd(void);
-
 void console_send_str(u8* str);
 
+#endif /* __CONSOLE_H */
 
-#endif /* __LCD_H */

@@ -6,11 +6,15 @@
 */
 
 #include <stm32f10x_lib.h>
+#include <stdio.h>
+#include <string.h>
 #include "sys.h"
 #include "console.h"
 #include "channel.h"
 #include "storage.h"
 #include "reader.h"
+#include "delay.h"
+#include "storage.h"
 
 /* Console command format 
 Total length:8bytes
@@ -80,15 +84,19 @@ u8 _console_parse(void)
 		{
 			remain = storage_query();
 			sprintf(str, "mng_lbl_remain.text=%d\n", remain);
-			console_send_str(str);
+			console_send_str((u8*)str);
 		}
 		else if (0x02 == g_console_rxbuf[3])  /* Buy license */
 		{
-			// Buy license
 			g_reader_rxcnt = 0;
-			//reader_write_block(1, 0xabcd);
 			reader_read_block(1);
-			//reader_get_cardinfo();
+			delay_ms(5000);
+
+			sprintf(str, "mng_lbl_value.text=%d\n", card_info.value);
+			console_send_str((u8*)str);
+
+			/* ´æ´¢Ë¢¿¨Öµ*/
+			storage_add(card_info.value);
 		}
 		else if (0x03 == g_console_rxbuf[3])  /* Return to main page */
 		{
@@ -196,7 +204,4 @@ void console_send_str(u8* str)
 {
  	while (*str)
 		console_send_ch(*str++);
-}
-
-
-
+} 

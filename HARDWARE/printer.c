@@ -1,8 +1,5 @@
 /*
-* Printer
-*
 * printer.c
-*
 */
 
 #include <stm32f10x_lib.h>
@@ -10,6 +7,7 @@
 #include "sys.h"
 #include "printer.h"
 #include "channel.h"
+#include "motor.h"
 #include "delay.h"
 
 extern	struct tube tubes[MAX_CHANNELS];
@@ -180,6 +178,7 @@ void print_str(char* str)
 		print_ch(*str++);
 }
 
+#if 0
 void printer_main(void)
 {
 	u8 i, j;
@@ -205,6 +204,21 @@ void printer_main(void)
                 continue;
 	}
 }
+#else
+void printer_main(void)
+{
+	u8 i;
+
+	for (i=0; i<MAX_CHANNELS; i++) {
+		if (tubes[i].status == CHN_STATUS_FINISH) {
+			printer_graph(i);
+			tubes[i].status = CHN_STATUS_NONE;
+		}
+            else
+                continue;
+	}
+}
+#endif
 
 void printer_test(void)
 {
@@ -222,15 +236,13 @@ void printer_do_print(u8 *buf, u16 len)
 		print_ch(buf[i]);
 }
 
-void printer_graph(void)
+void printer_graph(u8 idx)
 {
-	int i;
-	u32 values[] = {5000, 4800, 4500, 4400, 4300, 4000, 3900,
-				   3800, 3750, 3500, 3300, 3200, 2900};
+	int i = 12;
 	
-	for (i=12; i>=0; i--) {
+	for (; i>=0; i--) {
 		_print_yaxis(0);
-		_print_data(values[i]);
+		_print_data(tubes[idx].values[i] * MOTOR0_MIN_STEP);
 	}
 	_print_yaxis(1);
 	_print_xais();

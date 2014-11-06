@@ -10,8 +10,6 @@ Group (HARDWARE)
 File 1,2,<.\STM32F10x.s><STM32F10x.s>
 File 2,1,<.\main.c><main.c>
 File 3,1,<.\HARDWARE\delay.c><delay.c>
-File 3,1,<.\HARDWARE\key.c><key.c>
-File 3,1,<.\HARDWARE\led.c><led.c>
 File 3,1,<.\HARDWARE\sys.c><sys.c>
 File 3,1,<.\HARDWARE\comm.c><comm.c>
 File 3,1,<.\HARDWARE\printer.c><printer.c>

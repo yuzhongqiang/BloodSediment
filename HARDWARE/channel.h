@@ -23,6 +23,9 @@ struct tube {
   u32 values[MAX_MEASURE_TIMES];
 };
 
+/*
+* µç»úÉ¨Ãè×´Ì¬
+*/
 #define SCAN_STAGE_RESETING 1
 #define SCAN_STAGE_RESETED  2
 #define SCAN_STAGE_SCANNING 3
@@ -35,6 +38,5 @@ void channel_main(void);
 void channel_pause(void);
 void channel_resume(void);
 
-
-#endif
+#endif  // __MOTOR_H
 

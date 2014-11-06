@@ -23,6 +23,7 @@ struct _card_info card_info;
 u8 g_reader_rxbuf[64];     //½ÓÊÕ»º³å,×î´ó64¸ö×Ö½Ú.
 u8 g_reader_rxcnt = 0;
 
+#if 0
 void _reader_enable_intr(void)
 {
 	g_reader_rxcnt = 0;
@@ -34,12 +35,11 @@ void _reader_disable_intr(void)
 {
 	USART2->CR1 &= ~(1 << 8);    //PEÖÐ¶ÏÊ¹ÄÜ
 	USART2->CR1 &= ~(1 << 5);    //½ÓÊÕ»º³åÇø·Ç¿ÕÖÐ¶ÏÊ¹Ä
-}
+#endif
 
 void USART2_IRQHandler(void)
 {
 	u8 res;	
-	u8 i;
 	
 	if (USART2->SR & (1<<5))//½ÓÊÕµ½Êý¾Ý
 	{	 
@@ -57,12 +57,12 @@ void USART2_IRQHandler(void)
 				card_info.present = 1;
 				card_info.status = g_reader_rxbuf[2];
 				break;
-				
-			case 0x03:   //Ò»¼ü³äÖµ
-				break;
-				
-			case 0x02:   //Ò»¼ü¶Á¿é
-				card_info.value = ((g_reader_rxbuf[4] << 8) + g_reader_rxbuf[5]);
+	
+			case 0x02:   /* Ò»¼ü¶Á¿é»òÐ´¿¨*/
+				if (g_reader_rxcnt > 6)     /* ¶Á¿¨*/
+					card_info.value = ((g_reader_rxbuf[4] << 8) + g_reader_rxbuf[5]);
+				else     /* Ð´¿¨*/
+					;
 				break;
 				
 			default:
@@ -95,8 +95,8 @@ void reader_init(u32 baud)
 	USART2->CR1 |= 0X200C;  //1Î»Í£Ö¹,ÎÞÐ£ÑéÎ».
 
 	//Ê¹ÄÜ½ÓÊÕÖÐ¶Ï
-	//USART2->CR1 |= (1 << 8);    //PEÖÐ¶ÏÊ¹ÄÜ
-	//USART2->CR1 |= (1 << 5);    //½ÓÊÕ»º³åÇø·Ç¿ÕÖÐ¶ÏÊ¹ÄÜ	    	
+	USART2->CR1 |= (1 << 8);    //PEÖÐ¶ÏÊ¹ÄÜ
+	USART2->CR1 |= (1 << 5);    //½ÓÊÕ»º³åÇø·Ç¿ÕÖÐ¶ÏÊ¹ÄÜ	    	
 	nvic_init(3, 3, USART2_IRQChannel, 2);//×é2£¬×îµÍÓÅÏÈ¼¶ 
 }
 
@@ -133,23 +133,21 @@ static u8 reader_fill_checksum(u8* buf, u8 len)
 [FrameLen]	[SEQ/CmdType]	[Cmd/Status]	[Length]	[Info] 	[BCC]	[ETX]
 1byte          	1byte   			1byte  			1byte  	N bytes  1byte  	1byte
 */
+#if 0
 void reader_get_cardinfo(void)
 {
 	//u8 buf[6] = {0x06, 0x01, 0x41, 0x00, 0xB9/*checksum*/, 0x03};  //for test
 	u8 buf[6] = {0x06, 0x01, 0x41, 0x00, 0x00/*checksum*/, 0x03};
 	reader_fill_checksum(buf, 6);
-	_reader_enable_intr();
-	reader_send_bytes(buf, sizeof(buf));
-	//delay_ms(1000);
+	reader_send_bytes(buf, sizeof(buf));	
 }
+#endif
 
 void reader_close_card(void)
 {
 	u8 buf[6] = {0x06, 0x02, 0x44, 0x00, 0x00, 0x03};
 	reader_fill_checksum(buf, 6);
-	_reader_enable_intr();
 	reader_send_bytes(buf, sizeof(buf));
-	delay_ms(1000);
 }
 
 u16 reader_read_block(u8 blk)
@@ -158,10 +156,8 @@ u16 reader_read_block(u8 blk)
 		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x03};
 	buf[4] = blk;
 	reader_fill_checksum(buf, 15);
-	_reader_enable_intr();
 	reader_send_bytes(buf, sizeof(buf));
-	//delay_ms(1000);
-	//_reader_disable_intr();
+	return 0;
 }
 
 void reader_write_block(u8 blk, u16 value)
@@ -176,9 +172,7 @@ void reader_write_block(u8 blk, u16 value)
 	buf[13] = (u8)((value & 0xff00) >> 8);
 	buf[14] = (u8)(value & 0x00ff);
 	reader_fill_checksum(buf, sizeof(buf));
-	_reader_enable_intr();
 	reader_send_bytes(buf, sizeof(buf));
-	//delay_ms(1000);
 }
 
 #if 0
@@ -392,9 +386,6 @@ u16 reader_main(void)
 		delay_ms(200);
 	}
 
-	reader_get_cardinfo();
-	//reader_change_cc(7);
-	//reader_read_block(4);
-	//reader_write_value(value);
+	return 0;
 }
 

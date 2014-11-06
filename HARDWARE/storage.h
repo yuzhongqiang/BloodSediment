@@ -1,5 +1,5 @@
-#ifndef __24CXX_H
-#define __24CXX_H
+#ifndef __STORAGE_H
+#define __STORAGE_H
 #include "sys.h"
 
 //IO∑ΩœÚ…Ë÷√
@@ -28,22 +28,7 @@ void storage_init(void);
 u16 storage_query(void);
 void storage_save(u32 value);
 u16 storage_dec(void);
+void storage_add(u32 value);
 
-
-#endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#endif   // __STORAGE_H
 

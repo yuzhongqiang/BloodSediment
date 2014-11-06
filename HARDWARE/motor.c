@@ -282,6 +282,7 @@ static u8 _fn_motor2_reset_position_blocked(void)
 /**************************************************************
 			  Motor reset routines (non blocked)
 **************************************************************/
+#if 0
 static u8 _fn_motor0_reset_position(void)
 {
 	if (_motor0_is_reset())
@@ -309,6 +310,7 @@ static u8 _fn_motor2_reset_position(void)
 	else
 		return 1;
 }
+#endif
 
 void motor_reset_position_blocked(u8 motor_id)
 {
@@ -449,7 +451,7 @@ void motor_scan_chn(u8 motor_id, u8 chn_id)
 		}
 		motor_move_steps_blocked(1, dir, steps);
 		delay_ms(10);		
-		motor2_shake(21);
+		motor2_shake(18);
 
 		g_motor1_pos = g_cur_chn;
 	}

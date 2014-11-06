@@ -1,6 +1,7 @@
 #ifndef __MOTOR_H_
 #define __MOTOR_H_
 
+#define MOTOR0_MIN_STEP  2     /* motor0转动一圈移动的距离,单位0.01mm */
 #define MOTOR0_MAX_TRIP  2200
 #define MOTOR0_INTERVAL_TIME 10
 

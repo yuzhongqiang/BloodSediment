@@ -293,5 +293,13 @@ u16 storage_dec(void)
 	
 	remain = storage_query();
 	storage_save(remain-1);
-}
+	return 0;
+} 
 
+void storage_add(u32 value)
+{
+	u16 remain;
+	
+	remain = storage_query();
+	storage_save(remain + value);	
+}	   

@@ -182,10 +182,9 @@ static void _channel_config(void)
  
 static void channel_check_all(void)
 {
-    u8 i, j;
+    u8 i;
     
-	for (i=0; i<MAX_CHANNELS; i++)
-	{
+	for (i=0; i<MAX_CHANNELS; i++) {
 	    if  (tubes[i].status != CHN_STATUS_NONE)
             continue;
         
@@ -226,17 +225,30 @@ static void channel_check_all(void)
 #endif
 		}			
 		channel_close();
-        
-        if (tubes[i].inplace)
-        {
-            tubes[i].status = CHN_STATUS_WAITING;
-			tubes[i].insert_time = rtc_get_sec();
+
+		/* 没有插入管子 */        
+        if (!tubes[i].inplace) {
+			tubes[i].status = CHN_STATUS_NONE;
+			return;
         }
-		else
-            tubes[i].status = CHN_STATUS_NONE;
+
+		/* 血沉管在位 */
+		switch (tubes[i].remains) {
+			case MAX_MEASURE_TIMES:
+				tubes[i].status = CHN_STATUS_WAITING;
+				tubes[i].insert_time = rtc_get_sec();
+				break;
+			case 0:
+				tubes[i].status = CHN_STATUS_FINISH;
+				break;
+			default:
+				tubes[i].status = CHN_STATUS_WAITING;
+				break;
+		}
 	}
 }
 
+#if ESR_DEBUG
 static void channel_check_all_for_debug(void)
 {
     u8 i, j;
@@ -293,6 +305,7 @@ static void channel_check_all_for_debug(void)
             tubes[i].status = CHN_STATUS_NONE;
 	}
 }
+#endif
 
 /*
 	Return value:
@@ -372,7 +385,7 @@ void channel_init(void)
             if (tubes[i].inplace)
             {
                 tubes[i].status = CHN_STATUS_WAITING;
-			tubes[i].insert_time = rtc_get_sec();
+				tubes[i].insert_time = rtc_get_sec();
             }
             else
                 tubes[i].status = CHN_STATUS_NONE;
@@ -383,7 +396,7 @@ void channel_init(void)
 	}
 }
 
-
+#if ESR_DEBUG
 void channel_init_for_debug(void)
 {
 	u8 i = 0, j = 0;
@@ -444,7 +457,7 @@ void channel_init_for_debug(void)
 			tubes[i].values[j] = 0;
 	}
 }
-
+#endif
 
 void channel_main()
 {
@@ -455,8 +468,12 @@ void channel_main()
 	case SCAN_STAGE_RESETING:
 		break;
 	case SCAN_STAGE_RESETED:
+#if ESR_DEBUG
+		channel_check_all_for_debug();
+#else
 		channel_check_all();
-		//channel_check_all_for_debug();
+#endif
+
 		found = channel_select_current();
 		if (1 == g_pause)
 			break;
