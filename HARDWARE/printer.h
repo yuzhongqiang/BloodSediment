@@ -19,8 +19,9 @@ u8 print_ch(char ch);
 /* str±ØÐëÒÔ\0×Ö·û½áÎ² */
 void print_str(char* str);
 
-void do_print(void);
 
 void printer_test(void);
+void printer_do_print(u8 *buf, u16 len);
+void printer_graph(void);
 
 #endif /* __PRINTER_H */

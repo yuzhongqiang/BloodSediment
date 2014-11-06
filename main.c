@@ -32,8 +32,8 @@ int main(void)
 	*/
 	
 	/////channel_init();
-	channel_init_for_debug();
-	motor_init();
+	///channel_init_for_debug();
+	///motor_init();
 	
 	delay_ms(200);
 	
@@ -54,9 +54,13 @@ int main(void)
 	*/ 
 
 	/* EEPROM init */
-	storage_init();
+	storage_init();	
 
-	while (1)
+	//printer_test();
+	printer_graph();
+	delay_ms(1000);
+
+	while (0)
 	{	   
 		g_cmd = console_recv_cmd();
 		switch (g_cmd)
