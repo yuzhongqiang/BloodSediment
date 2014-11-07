@@ -34,11 +34,10 @@ For example:
 This is the run command in page 1
 */
 
-extern struct _card_info card_info;
-extern u8 g_reader_rxbuf[64];     //接收缓冲,最大64个字节.
-extern u8 g_reader_rxcnt;
-
-
+extern struct _card_info g_card_info;
+struct circle_buf g_cons_buf;
+u8 g_cmd_buf[32];
+u8 g_buf_cnt;
 
 /* 当前接收到的命令*/
 u8 g_console_curstat = CONSOLE_STAT_INIT;
@@ -109,38 +108,12 @@ u8 _console_parse(void)
 */   	
 void USART1_IRQHandler(void)
 {
-{
 	u8 res;	 
 	
 	if (USART1->SR & (1<<5)) {  	//接收到数据
-    		res = USART1->DR; 
-		switch (g_console_rxstat) {
-		case _STATE_RECIEVING:
-			if (0x0d == res) {
-				g_console_rxbuf[g_console_rxcnt++] = res;
-				g_console_rxstat = _STATE_0XD_RECVED;
-			}
-			else
-				g_console_rxbuf[g_console_rxcnt++] = res;			
-			break;
-		case _STATE_0XD_RECVED:
-			if (res != 0x0A)  {     //error, restart
-				g_console_rxcnt = 0;
-				g_console_rxstat = _STATE_RECIEVING;
-			}
-			else 	{   // all recieved
-				   g_console_rxbuf[g_console_rxcnt++] = res;
-				   if (g_console_rxbuf[0] == 0xf3 && g_console_rxbuf[1] == 0xd7
-				   	&& g_console_rxcnt == 8) {
-					g_console_cmd_recieved = 1;	
-				   }
-				g_console_rxcnt = 0;
-				g_console_rxstat = _STATE_RECIEVING;
-			}
-			break;
-		}
-	}  											 
-} 										 
+		res = USART1->DR;
+		buffer_push_byte(&cons_buf, res);
+	}
 }
 
 /*
@@ -152,7 +125,9 @@ void console_init(u32 baud)
 	float temp;
 	u16 mantissa;
 	u16 fraction;
-		   
+
+	buffer_clear(&cons_buf);
+	
 	RCC->APB2ENR |= 1<<2;   //使能PORTA口时钟   OK
 	RCC->APB2ENR |= 1<<14;  //使能串口时钟 	  OK
 	GPIOA->CRH &= 0XFFFFF00F; 
@@ -177,13 +152,13 @@ void console_init(u32 baud)
 }
 
 u8 console_main(void)
-{
-	if (g_console_cmd_recieved) {
-		_console_parse();
-		g_console_cmd_recieved = 0;
-	}
-	
-	return g_console_curstat;
+{	
+	u8 ch;
+
+	ch = buffer_pop_byte(g_cons_buf);
+	if ((g_buf_cnt == 0) && ())
+
+
 }
 
 u8 console_send_ch(u8 ch)
