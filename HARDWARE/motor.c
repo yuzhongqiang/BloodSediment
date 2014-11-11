@@ -86,6 +86,15 @@ clear:
 	TIM3->SR &= ~(1 << 0);	//清除中断标志位
 }
 
+void _motor_set_speed(u16 arr)
+{
+	//TIM3->DIER &= (~(1<<0));    //Disable timer3 interrupt
+	//TIM3->CR1 &= ~(1 << 0);;    //关闭定时器3
+ 	//delay_us(100);
+	TIM3->ARR = arr;
+	delay_us(100);
+}
+
 /*
 	定时器的计数频率 = 72,000,000/freq_div
 	计数值 = count

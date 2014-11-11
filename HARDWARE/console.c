@@ -16,91 +16,9 @@
 #include "delay.h"
 #include "storage.h"
 
-/* Console command format 
-Total length:8bytes
-Header(2bytes): 0xf3, 0xd7
-cmd(4bytes): page#(1byte), cmd#(1byte), resv, resv
-Tail(2bytes): 0x0d, 0x0a
-Page 1:
-	cmd1: run
-	cmd2: pause
-	cmd3: status
-Page 2:
-	cmd1: query
-	cmd2: buy
-	
-For example:
-0xf3,0xd7,0x00,0x01,0x00,0x00,0x0d,0x0a
-This is the run command in page 1
-*/
-
-extern struct _card_info g_card_info;
-struct circle_buf g_cons_buf;
-u8 g_cmd_buf[32];
-u8 g_buf_cnt;
 
 /* 当前接收到的命令*/
 u8 g_console_curstat = CONSOLE_STAT_INIT;
-
-u8 _console_parse(void)
-{
-	u32 remain = 0;
-	char str[64];
-
-	memset(str, 0, sizeof(64));
-	switch (g_console_rxbuf[2])
-	{
-	case 0:
-		break;
-	case 1:   //main page		
-		if (0x01 == g_console_rxbuf[3])      /* Run */
-		{
-			channel_resume();
-			g_console_curstat= CONSOLE_STAT_RUNNING;
-		}
-		else if (0x02 == g_console_rxbuf[3]) /* Pause */
-		{
-			channel_pause();
-			g_console_curstat = CONSOLE_STAT_PAUSE;
-		}
-		else if (0x03 == g_console_rxbuf[3]) /* Enter manage page */
-		{
-			channel_pause();
-			g_console_curstat = CONSOLE_STAT_MNG;
-		}
-		break;
-	case 2:  // manage page
-		if (0x01 == g_console_rxbuf[3])  /* Query remain */
-		{
-			remain = storage_query();
-			sprintf(str, "mng_lbl_remain.text=%d\n", remain);
-			console_send_str((u8*)str);
-		}
-		else if (0x02 == g_console_rxbuf[3])  /* Buy license */
-		{
-			g_reader_rxcnt = 0;
-			reader_read_block(1);
-			//delay_ms(2000);
-
-			sprintf(str, "mng_lbl_value.text=%d\n", card_info.value);
-			console_send_str((u8*)str);
-
-			/* 存储刷卡值*/
-			storage_add(card_info.value);
-		}
-		else if (0x03 == g_console_rxbuf[3])  /* Return to main page */
-		{
-			channel_pause();
-			g_console_curstat = CONSOLE_STAT_MNG;
-		}
-		break;
-	default:
-		break;
-	}
-	g_console_rxcnt = 0;
-	
-	return 0;
-}
 
 /* 
     串口2中断服务程序
@@ -112,7 +30,7 @@ void USART1_IRQHandler(void)
 	
 	if (USART1->SR & (1<<5)) {  	//接收到数据
 		res = USART1->DR;
-		buffer_push_byte(&cons_buf, res);
+		buffer_push_byte(&g_cons_buf, res);
 	}
 }
 
@@ -151,14 +69,100 @@ void console_init(u32 baud)
 	nvic_init(3, 3, USART1_IRQChannel, 2);//组2，最低优先级 
 }
 
+
+/* Console command format 
+Total length:8bytes
+Header(2bytes): 0xf3, 0xd7
+cmd(4bytes): page#(1byte), cmd#(1byte), resv, resv
+Tail(2bytes): 0x0d, 0x0a
+Page 1:
+	cmd1: run
+	cmd2: pause
+	cmd3: status
+Page 2:
+	cmd1: query
+	cmd2: buy
+	
+For example:
+0xf3,0xd7,0x00,0x01,0x00,0x00,0x0d,0x0a
+This is the run command in page 1
+*/
 u8 console_main(void)
 {	
-	u8 ch;
+	u8 ret, ch1, ch2;
 
-	ch = buffer_pop_byte(g_cons_buf);
-	if ((g_buf_cnt == 0) && ())
+loop:
+	/* find frame head */
+	while ((buffer_size(g_cons_buf) > 0)) && (BUF_HEAD(g_cons_buf) != 0xf3)
+		buffer_pop_byte(g_cons_buf);
+	if (buffer_size(g_cons_buf)==0)
+		return 0;
 
+	/* now frame head is 0xf3 */
+	buffer_pop_byte(g_cons_buf);
+	if (BUF_HEAD(g_cons_buf) != 0xd7) // ???
+		return;
+	buffer_pop_byte(g_cons_buf);
+	
+	if (buffer_size(g_cons_buf)<6)    // ???
+		return;
+	/* frame tail check */
+	if ((buffer_chk_nbyte(g_cons_buf, 4)!= 0x0d) ||
+		(buffer_chk_nbyte(g_cons_buf, 5) != 0x0a)) {
+		/* frame tail error */
+		buffer_pop_nbytes(g_cons_buf, 6);
+		goto loop;
+		return;		
+	}
 
+	/* now parse the commands */
+	ch1 = buffer_chk_nbyte(0);
+	ch2 = buffer_chk_nbyte(1);
+	switch (ch1) {
+	case 0:
+		break;
+	case 1:   //main page		
+		if (0x01 == ch2) {    /* Run */
+			//channel_resume();
+			//g_console_curstat= CONSOLE_STAT_RUNNING;
+		}
+		else if (0x02 == ch2) {  /* Pause */
+			//channel_pause();
+			//g_console_curstat = CONSOLE_STAT_PAUSE;
+		}
+		else if (0x03 == ch2) {  /* Enter manage page */
+			//channel_pause();
+			//g_console_curstat = CONSOLE_STAT_MNG;
+		}
+		break;
+	case 2:  // manage page
+		if (0x01 == ch2) {      /* Query remain */
+			//remain = storage_query();
+			//sprintf(str, "mng_lbl_remain.text=%d\n", remain);
+			//console_send_str((u8*)str);
+		}
+		else if (0x02 == ch2) {  /* Buy license */
+			g_reader_rxcnt = 0;
+			//reader_read_block(1);
+			//delay_ms(2000);
+
+			//sprintf(str, "mng_lbl_value.text=%d\n", card_info.value);
+			//console_send_str((u8*)str);
+
+			/* 存储刷卡值*/
+			//storage_add(card_info.value);
+		}
+		else if (0x03 == ch2) {   /* Return to main page */
+			//channel_pause();
+			//g_console_curstat = CONSOLE_STAT_MNG;
+		}
+		break;
+	default:
+		break;
+	}
+	buffer_pop_nbytes(g_cons_buf, 6);
+	return g_console_curstat;
+	
 }
 
 u8 console_send_ch(u8 ch)
