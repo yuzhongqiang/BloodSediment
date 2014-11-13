@@ -56,11 +56,7 @@ u32 g_docking[10] = {
 	POS0 + 8 * POS_INTV,
 	POS0 + 9 * POS_INTV
 };
-/*
-	0xff: Reset position
-	0 ~ 9: Working position
-*/
-u8 g_motor1_pos = 0xff;  
+
 
 //定时器3中断服务程序	 
 void TIM3_IRQHandler(void)
@@ -226,7 +222,7 @@ void motor2_shake(u32 steps)
 {
 	u8 i;
 
-	for (i=0; i<3; i++)
+	for (i=0; i<8; i++)
 	{
 		g_timer_fn = _fn_motor_move_steps;
 		g_demand_steps = steps;
@@ -434,36 +430,11 @@ should_stop:
 	return 0;		
 }
 
-void motor_scan_chn(u8 motor_id, u8 chn_id)
+/* In fact, chn_id is not used here now */
+void motor_scan_chn(u8 motor_id)
 {
 	u8 dir;
 	u32 steps;
-
-	/* do shaking when scan the first time */
-	if (tubes[g_cur_chn].remains == MAX_MEASURE_TIMES)
-	{
-		/* motor1 reach to resetting place */
-		if (g_motor1_pos == 0xff)
-		{
-			steps = g_docking[g_cur_chn];
-			dir = MOTOR0_DIR_FWD;
-		}
-		else if (g_cur_chn > g_motor1_pos)
-		{
-			steps = g_docking[g_cur_chn] - g_docking[g_motor1_pos];
-			dir = MOTOR0_DIR_FWD;
-		}
-		else
-		{
-			steps = g_docking[g_motor1_pos] - g_docking[g_cur_chn];
-			dir = MOTOR0_DIR_BWD;
-		}
-		motor_move_steps_blocked(1, dir, steps);
-		delay_ms(10);		
-		motor2_shake(18);
-
-		g_motor1_pos = g_cur_chn;
-	}
 
 	/* start schan ... */	
 	g_scan_stage = SCAN_STAGE_SCANNING;

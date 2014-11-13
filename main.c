@@ -28,8 +28,8 @@ int main(void)
 	rtc_set(1970,1,1,0,0,0);
 
 	//channel_init();
-	channel_init_for_debug();
-	motor_init();
+	/////channel_init_for_debug();
+	/////motor_init();
 	
 	delay_ms(200);
 	
@@ -60,12 +60,18 @@ int main(void)
 			break;
 		case CONSOLE_STAT_PAUSE:
 			channel_pause();
-			break;			
+			break;		
+		case CONSOLE_STAT_BUY:
+			break;
+		case CONSOLE_STAT_QUERY:
+			break;
+		case CONSOLE_STAT_MNG:
+			break;
 		default:
 			break;
 		} 
 		
-		printer_main();
+		//printer_main();
 		delay_ms(300);
 	}	 
 }

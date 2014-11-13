@@ -19,6 +19,7 @@ File 3,1,<.\HARDWARE\channel.c><channel.c>
 File 3,1,<.\HARDWARE\motor.c><motor.c>
 File 3,1,<.\HARDWARE\console.c><console.c>
 File 3,1,<.\HARDWARE\storage.c><storage.c>
+File 3,1,<.\HARDWARE\buffer.c><buffer.c>
 
 
 Options 1,0,0  // Target 'Target 1'

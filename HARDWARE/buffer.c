@@ -18,15 +18,17 @@ u8 buffer_size(struct circle_buf* buf)
 void buffer_push_byte(struct circle_buf* buf, u8 byte)
 {
 	/* 注意此处没有处理溢出*/
-	buf->tail = ((buf->tail + 1) % BUFFER_SIZE);
 	buf->buf[buf->tail] = byte;
+	buf->tail = ((buf->tail + 1) % BUFFER_SIZE);
 }
 
 u8 buffer_pop_byte(struct circle_buf* buf)
 {
+	u8 tmp;
+
 	if (buf->tail == buf->head)
 		return 0;
-	u8 tmp = buf->buf[buf->head];
+	tmp = buf->buf[buf->head];
 	buf->head = ((buf->head + 1)  % BUFFER_SIZE);
 	return 1;
 }

@@ -9,8 +9,9 @@ void motor_move_steps(u8 motor_id, u8 dir, u32 steps);
 void motor_move_steps_blocked(u8 motor_id, u8 dir, u32 steps);
 void motor_reset_position_blocked(u8 motor_id);
 void motor_reset_position(u8 motor_id);
-void motor_scan_chn(u8 motor_id, u8 chn_id);
+void motor_scan_chn(u8 motor_id);
 void motor_init(void);
+void motor2_shake(u32 steps);
 
 
 #endif     /* __MOTOR_H_ */

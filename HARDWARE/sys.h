@@ -3,7 +3,7 @@
  
 #include <stm32f10x_lib.h>
 	  
-#define ESR_DEBUG 1
+#define ESR_DEBUG 0
 
 //机器架构定义
 //#define SMALL_MACHINE
@@ -120,6 +120,8 @@ void jtag_set(u8 mode);
 #define CONSOLE_STAT_RUNNING   1
 #define CONSOLE_STAT_PAUSE     2
 #define CONSOLE_STAT_MNG  3
+#define CONSOLE_STAT_QUERY 4
+#define CONSOLE_STAT_BUY 5
 
 #endif   // __SYS_H
 

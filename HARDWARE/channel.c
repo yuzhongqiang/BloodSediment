@@ -14,7 +14,6 @@ struct tube tubes[MAX_CHANNELS];
 /* 0 - 9: running channel
      0xff: reset position
 */
-u8 g_cur_chn = 0xff;   
 extern u8 g_scan_stage;
 
 /* 暂停标志*/
@@ -46,7 +45,6 @@ void channel_open(u8 chn);
 u8 channel_is_opaque(u8 chn);
 void _channel_config(void);
 void channel_check_all(void);
-u8 channel_select_current(void);
 
 static void channel_close(void)
 {
@@ -309,29 +307,24 @@ static void channel_check_all_for_debug(void)
 
 /*
 	Return value:
-	1 - found a channel
-	0 - no relevant channel found
+	1 - need a scaning
+	0 - do not need a scanning
 */
-static u8 channel_select_current(void)
+static u8 _channel_need_scan(void)
 {
 	u8 i;
 
-	for (i=0; i<MAX_CHANNELS; i++)
-	{		
+	for (i=0; i<MAX_CHANNELS; i++) {		
 		if (!tubes[i].inplace)
 			continue;
 		if (tubes[i].remains == 0)
 			continue;
 
-		if (((tubes[i].remains != 0) && (rtc_get_sec()-tubes[i].last_scan_time > MOTOR0_INTERVAL_TIME)) 
-			|| (tubes[i].remains == 13))
-		{
-			g_cur_chn = i;
+		if (((tubes[i].remains != 0) &&
+			(rtc_get_sec()-tubes[i].last_scan_time > MOTOR0_INTERVAL_TIME)) ||
+			(tubes[i].remains == 13))
 			return 1;
-		}
 	}
-
-	// No relevant channel to  select
 	return 0;
 }
 
@@ -459,9 +452,55 @@ void channel_init_for_debug(void)
 }
 #endif
 
+/*
+	0xff: Reset position
+	0 ~ 9: Working position
+*/
+u8 g_motor1_pos = 0xff; 
+
+void _motor_check_shake(void)
+{
+	u8 i;
+	
+	for (i=0; i<MAX_CHANNELS; i++) {
+		/* do shaking when scan the first time */
+		if ((tubes[i].inplace == 1) &&
+			(tubes[i].remains == MAX_MEASURE_TIMES))
+		{
+			/* 调慢电机速度*/
+			_motor_set_speed(5 * 6);
+			
+			/* motor1 reach to resetting place */
+			if (g_motor1_pos == 0xff)
+			{
+				steps = g_docking[i];
+				dir = MOTOR0_DIR_FWD;
+			}
+			else if (i > g_motor1_pos)
+			{
+				steps = g_docking[i] - g_docking[g_motor1_pos];
+				dir = MOTOR0_DIR_FWD;
+			}
+			else
+			{
+				steps = g_docking[g_motor1_pos] - g_docking[i];
+				dir = MOTOR0_DIR_BWD;
+			}
+			motor_move_steps_blocked(1, dir, steps);
+			delay_ms(10);		
+			motor2_shake(18);
+		
+			/* 电机速度还原*/
+			_motor_set_speed(5);
+			g_motor1_pos = g_cur_chn;
+		}
+		
+	}
+}
+
 void channel_main()
 {
-	u8 found;
+	u8 need_scan = 0;
 
 	switch (g_scan_stage)
 	{
@@ -474,21 +513,26 @@ void channel_main()
 		channel_check_all();
 #endif
 
-		found = channel_select_current();
 		if (1 == g_pause)
 			break;
 		
-		g_scan_stage = SCAN_STAGE_SCANNING;
-		if (found)
+		/* Check if any tubes need shaking */
+		_motor_check_shake();
+
+		need_scan = _channel_need_scan();
+		if (need_scan) {
+			g_scan_stage = SCAN_STAGE_SCANNING;
 			motor_scan_chn(0, g_cur_chn);
-		else
-			g_scan_stage = SCAN_STAGE_RESETED;
+		}
 		break;
+		
 	case SCAN_STAGE_SCANNING:
 		break;
+		
 	case SCAN_STAGE_SCANFINISH:
 		motor_reset_position_blocked(0);		
 		break;
+		
 	default:
 		break;
 	}		
