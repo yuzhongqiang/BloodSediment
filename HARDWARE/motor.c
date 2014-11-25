@@ -237,6 +237,54 @@ void motor2_shake(u32 steps)
 	}
 }
 
+/*
+	0xff: Reset position
+	0 ~ 9: Working position
+*/
+u8 g_motor1_pos = 0xff; 
+extern struct tube tubes[MAX_CHANNELS];
+
+void _motor_check_shake(void)
+{
+	u8 i, dir;
+	u32 steps;
+	
+	for (i=0; i<MAX_CHANNELS; i++) {
+		/* do shaking when scan the first time */
+		if ((tubes[i].inplace == 1) &&
+			(tubes[i].remains == MAX_MEASURE_TIMES))
+		{
+			/* 调慢电机速度*/
+			_motor_set_speed(5 * 6);
+			
+			/* motor1 reach to resetting place */
+			if (g_motor1_pos == 0xff)
+			{
+				steps = g_docking[i];
+				dir = MOTOR0_DIR_FWD;
+			}
+			else if (i > g_motor1_pos)
+			{
+				steps = g_docking[i] - g_docking[g_motor1_pos];
+				dir = MOTOR0_DIR_FWD;
+			}
+			else
+			{
+				steps = g_docking[g_motor1_pos] - g_docking[i];
+				dir = MOTOR0_DIR_BWD;
+			}
+			motor_move_steps_blocked(1, dir, steps);
+			delay_ms(10);		
+			motor2_shake(18);
+		
+			/* 电机速度还原*/
+			_motor_set_speed(5);
+			g_motor1_pos = i;
+		}
+		
+	}
+}
+
 /**************************************************************
 						Motor reset routines(blocked)
 **************************************************************/
@@ -401,45 +449,54 @@ extern struct tube tubes[MAX_CHANNELS];
 extern u8 g_cur_chn;
 extern u8 channel_is_opaque(u8 chn);
 
+/*
+  Ret value: 0 - scanning complete
+  Ret value: 1 - scanning not complete
+*/
 static u8 _fn_motor0_scan_chn(void)
 {
 	u16 temp;
+	static u8 cur_chn = 0;
+	u8 i;
 
-	temp = GPIOA->ODR;
-	if (!(temp & 0x0010))  //CLKX is low
-	{
-		if (channel_is_opaque(g_cur_chn))
-		{
-			g_cur_trip0++;
-			if (g_cur_trip0 == MOTOR0_MAX_TRIP)
-				goto should_stop;
-		}
-		else
-			goto should_stop;
+	if (tubes[cur_chn].inplace == 0) {
+		cur_chn = ((cur_chn + 1) % MAX_CHANNELS);
+		return 1;
 	}
-	return 1;
+	
+	temp = GPIOA->ODR;
+	if (!(temp & 0x0010)) { //CLKX is low
+		g_cur_trip0++;
+		if ((channel_is_opaque(cur_chn)))
+			tubes[cur_chn].values[13 - tubes[cur_chn].remains] = g_cur_trip0;	
+		
+		if (g_cur_trip0 == MOTOR0_MAX_TRIP)
+			goto should_stop;
 
+	}
+	cur_chn = ((cur_chn +1 ) % MAX_CHANNELS);
+	return 1;
+	
 should_stop:
-	tubes[g_cur_chn].values[13 - tubes[g_cur_chn].remains] = g_cur_trip0;
-	tubes[g_cur_chn].remains--;
-	tubes[g_cur_chn].last_scan_time = rtc_get_sec();
+	for (i=0; i<MAX_CHANNELS; i++) {
+		if (tubes[i].inplace == 0) {
+			tubes[i].remains--;
+			tubes[i].last_scan_time = rtc_get_sec();
+		}
+	}
 	g_scan_stage = SCAN_STAGE_SCANFINISH;
 	g_cur_trip0 = 0;
 	g_demand_steps = 0;
-	
+		
 	return 0;		
 }
 
 /* In fact, chn_id is not used here now */
 void motor_scan_chn(u8 motor_id)
 {
-	u8 dir;
-	u32 steps;
-
 	/* start schan ... */	
 	g_scan_stage = SCAN_STAGE_SCANNING;
 	g_timer_fn = _fn_motor0_scan_chn;
-	tubes[chn_id].scan_times[13 - tubes[chn_id].remains] = rtc_get_sec();
 	g_demand_steps = 1;
 
 	_motor_set_dir(MOTOR0_DIR_UP);

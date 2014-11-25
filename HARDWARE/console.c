@@ -18,6 +18,8 @@
 #include "buffer.h"
 
 struct circle_buf g_cons_buf;
+extern struct _card_info card_info;
+
 
 /* 当前接收到的命令*/
 u8 g_console_curstat = CONSOLE_STAT_INIT;
@@ -92,30 +94,31 @@ This is the run command in page 1
 u8 console_main(void)
 {	
 	u16 remain;
-	u8 ret, ch1, ch2;
+	u8 ch1, ch2;
+	char str[100];
 
+	memset(str, 0, 100);
 loop:
 	/* find frame head */
 	while (((buffer_size(&g_cons_buf)) > 0) && (BUF_HEAD(g_cons_buf) != 0xf3))
 		buffer_pop_byte(&g_cons_buf);
 	if (buffer_size(&g_cons_buf)==0)
-		return 0;
+		return g_console_curstat;
 
 	/* now frame head is 0xf3 */
 	buffer_pop_byte(&g_cons_buf);
 	if (BUF_HEAD(g_cons_buf) != 0xd7) // ???
-		return;
+		return g_console_curstat;
 	buffer_pop_byte(&g_cons_buf);
 	
 	if (buffer_size(&g_cons_buf)<6)    // ???
-		return;
+		return g_console_curstat;
 	/* frame tail check */
 	if ((buffer_chk_nbyte(&g_cons_buf, 4)!= 0x0d) ||
 		(buffer_chk_nbyte(&g_cons_buf, 5) != 0x0a)) {
 		/* frame tail error */
 		buffer_pop_nbytes(&g_cons_buf, 6);
 		goto loop;
-		return;		
 	}
 
 	/* now parse the commands */

@@ -12,7 +12,7 @@ void motor_reset_position(u8 motor_id);
 void motor_scan_chn(u8 motor_id);
 void motor_init(void);
 void motor2_shake(u32 steps);
-
+void _motor_check_shake(void);
 
 #endif     /* __MOTOR_H_ */
 

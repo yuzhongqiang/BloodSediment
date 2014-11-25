@@ -452,52 +452,6 @@ void channel_init_for_debug(void)
 }
 #endif
 
-/*
-	0xff: Reset position
-	0 ~ 9: Working position
-*/
-u8 g_motor1_pos = 0xff; 
-
-void _motor_check_shake(void)
-{
-	u8 i;
-	
-	for (i=0; i<MAX_CHANNELS; i++) {
-		/* do shaking when scan the first time */
-		if ((tubes[i].inplace == 1) &&
-			(tubes[i].remains == MAX_MEASURE_TIMES))
-		{
-			/* 调慢电机速度*/
-			_motor_set_speed(5 * 6);
-			
-			/* motor1 reach to resetting place */
-			if (g_motor1_pos == 0xff)
-			{
-				steps = g_docking[i];
-				dir = MOTOR0_DIR_FWD;
-			}
-			else if (i > g_motor1_pos)
-			{
-				steps = g_docking[i] - g_docking[g_motor1_pos];
-				dir = MOTOR0_DIR_FWD;
-			}
-			else
-			{
-				steps = g_docking[g_motor1_pos] - g_docking[i];
-				dir = MOTOR0_DIR_BWD;
-			}
-			motor_move_steps_blocked(1, dir, steps);
-			delay_ms(10);		
-			motor2_shake(18);
-		
-			/* 电机速度还原*/
-			_motor_set_speed(5);
-			g_motor1_pos = g_cur_chn;
-		}
-		
-	}
-}
-
 void channel_main()
 {
 	u8 need_scan = 0;
@@ -522,7 +476,7 @@ void channel_main()
 		need_scan = _channel_need_scan();
 		if (need_scan) {
 			g_scan_stage = SCAN_STAGE_SCANNING;
-			motor_scan_chn(0, g_cur_chn);
+			motor_scan_chn(0);
 		}
 		break;
 		

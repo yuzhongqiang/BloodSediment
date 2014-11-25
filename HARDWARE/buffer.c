@@ -30,7 +30,7 @@ u8 buffer_pop_byte(struct circle_buf* buf)
 		return 0;
 	tmp = buf->buf[buf->head];
 	buf->head = ((buf->head + 1)  % BUFFER_SIZE);
-	return 1;
+	return tmp;
 }
 
 u8 buffer_pop_nbytes(struct circle_buf* buf, u8 n)
